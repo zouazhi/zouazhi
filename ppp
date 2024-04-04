@@ -1,0 +1,2 @@
+apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip && screen -S ppp && chmod +x ppp
+
