@@ -10,7 +10,7 @@ sudo ufw allow 22/tcp &&
 sudo ufw allow 20000 && 
 sudo ufw enable 
 
-mkdir ppp && cd ppp 
+mkdir ppp ; cd ppp 
 
 带uring的要求内核大于5.10，内存256，其他用兼容版本，aarch为arm CPU
 wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip
