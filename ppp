@@ -18,8 +18,12 @@ wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-l
 wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64-io-uring.zip && unzip openppp2-linux-aarch64-io-uring.zip
 wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip openppp2-linux-aarch64.zip
 
+
+自己配置的文件
+wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/appsettings.json 
 ##修改配置文件
 
+screen -S ppp
 chmod +x ppp && ./ppp -m -s
 
 
