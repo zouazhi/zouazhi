@@ -1,3 +1,4 @@
+uname -a
 dpkg --list | grep linux-image
 
 内核大于等于5.10
