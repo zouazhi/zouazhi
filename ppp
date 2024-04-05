@@ -1,10 +1,11 @@
 uname -a
 dpkg --list | grep linux-image
 
-内核大于等于5.10
+安装依赖，前置，防火墙
 apt update -y && apt install sudo -y 
 sudo apt install ufw screen unzip -y
 
+配置防火墙
 sudo ufw allow 22/tcp && 
 sudo ufw allow 20000 && 
 sudo ufw enable 
