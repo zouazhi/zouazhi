@@ -1,7 +1,13 @@
 dpkg --list | grep linux-image
-apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip && screen -S ppp 
 
+内核大于等于5.10
+apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip && screen -S ppp 
+内核小于5.10
 apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip openppp2-linux-amd64.zip && screen -S ppp 
+
+arm
+apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64-io-uring.zip && unzip openppp2-linux-aarch64-io-uring.zip && screen -S ppp
+apt update -y && apt install sudo -y && sudo apt install ufw screen unzip -y && sudo ufw allow 22/tcp && sudo ufw allow 20000 && sudo ufw enable && mkdir ppp && cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip openppp2-linux-aarch64.zip && screen -S ppp
 ##修改配置文件
 
 chmod +x ppp && ./ppp -m -s
