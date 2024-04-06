@@ -22,7 +22,9 @@ wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-l
 
 自己配置的文件
 wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/appsettings.json
-wget -O ppp https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp
+
 ##修改配置文件  2222→ip 当然端口也可以改 20000→端口
+nano appsettings.json
+
 screen -S ppp
 chmod +x ppp && ./ppp -m -s
