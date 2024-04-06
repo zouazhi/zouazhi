@@ -1,1 +1,10 @@
 rm -r folder_name
+#解压gz文件
+tar zxvf 
+解压一个已经被 gzip 压缩的归档文件：解压 example.tar.gz 文件，并在当前目录下恢复其中包含的文件和目录。
+
+tar -zxvf example.tar.gz
+-z: 表示要使用 gzip 解压归档文件。
+-x: 表示解压操作。
+-v: 表示详细输出，列出被解压的文件。
+-f example.tar.gz: 指定要解压的归档文件的名称为 example.tar.gz。
