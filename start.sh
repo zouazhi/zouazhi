@@ -8,9 +8,8 @@ apt update -y && apt install sudo -y
 sudo apt install ufw screen unzip wget -y
 
 配置防火墙
-sudo ufw allow 22/tcp && 
-sudo ufw allow 20000 && 
-sudo ufw enable 
+sudo ufw allow 22/tcp && sudo ufw allow 20000  #放行22 20000
+sudo ufw enable   #开启ufw
 
 mkdir ppp ; cd ppp 
 
