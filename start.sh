@@ -1,4 +1,6 @@
+#检查内核
 uname -a
+or 
 dpkg --list | grep linux-image
 
 安装依赖，前置，防火墙
