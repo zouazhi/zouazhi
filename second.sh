@@ -36,10 +36,13 @@ nano appsettings.json
 #配置服务
 wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp.service
 
+systemctl enable ppp.service && systemctl daemon-reload && sudo systemctl start ppp.service
+
 systemctl enable ppp.service
 systemctl daemon-reload
 sudo systemctl start ppp.service
 sudo systemctl status ppp.service
 sudo systemctl stop ppp.service
 sudo systemctl restart ppp.service
+systemctl disable ppp.service
 
