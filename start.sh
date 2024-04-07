@@ -14,10 +14,10 @@ sudo ufw enable   #开启ufw
 mkdir ppp ; cd ppp 
 
 带uring的要求内核大于5.10，内存256，其他用兼容版本，aarch为arm CPU
-wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip
-wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip openppp2-linux-amd64.zip
-wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64-io-uring.zip && unzip openppp2-linux-aarch64-io-uring.zip
-wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip openppp2-linux-aarch64.zip
+wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64-io-uring.zip && unzip openppp2-linux-amd64-io-uring.zip && rm openppp2-linux-amd64-io-uring.zip
+wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip openppp2-linux-amd64.zip && rm openppp2-linux-amd64.zip
+wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64-io-uring.zip && unzip openppp2-linux-aarch64-io-uring.zip && rm openppp2-linux-aarch64-io-uring.zip
+wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip openppp2-linux-aarch64.zip && rm openppp2-linux-aarch64.zip
 
 
 自己配置的文件
