@@ -13,6 +13,7 @@ sudo ufw enable   #开启ufw
 
 mkdir ppp ; cd ppp 
 
+安装ppp github地址 https://github.com/liulilittle/openppp2
 #带uring的要求内核大于5.10，内存256，其他用兼容版本，aarch为arm CPU
 #amd64
  #内核≥5.10 内存≥256MB
