@@ -33,5 +33,5 @@ wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/
 ##修改配置文件  2222→ip 当然端口也可以改 20000→端口
 nano appsettings.json
 
-screen -S ppp
-chmod +x ppp && ./ppp -m -s
+screen -S ppp #新建screen ppp
+chmod +x ppp && ./ppp -m -s #PPP~启动！
