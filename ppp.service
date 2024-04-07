@@ -1,0 +1,13 @@
+[Unit]
+Description=服务描述
+
+[Service]
+WorkingDirectory=/root/ppp/
+ExecStart=/root/ppp/ppp
+Restart=always
+RestartSec=3
+KillSignal=SIGINT
+User=root
+
+[Install]
+WantedBy=multi-user.target
