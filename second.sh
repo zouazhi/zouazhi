@@ -35,7 +35,6 @@ wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/
 nano appsettings.json
 
 #配置服务
-chmod +x /root/ppp/ && chmod +x /root/ppp/ppp
 wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp.service
 
 chmod +x /root/ppp/ && chmod +x /root/ppp/ppp && systemctl enable ppp.service && systemctl daemon-reload && sudo systemctl start ppp.service && sudo systemctl status ppp.service
