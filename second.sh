@@ -38,7 +38,7 @@ nano appsettings.json
 chmod +x /root/ppp/ && chmod +x /root/ppp/ppp
 wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp.service
 
-systemctl enable ppp.service && systemctl daemon-reload && sudo systemctl start ppp.service && sudo systemctl status ppp.service
+chmod +x /root/ppp/ && chmod +x /root/ppp/ppp && systemctl enable ppp.service && systemctl daemon-reload && sudo systemctl start ppp.service && sudo systemctl status ppp.service
 
 systemctl enable ppp.service
 systemctl daemon-reload
