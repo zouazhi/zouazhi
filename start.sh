@@ -36,4 +36,4 @@ nano appsettings.json
 screen -S ppp #新建screen ppp
 chmod +x ppp && ./ppp -m -s #PPP~启动！
 
-apt update && apt install sudo -y && mkdir ppp ; cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip -o openppp2*.zip 'ppp' && unzip -n openppp2*.zip -x 'ppp' && find . -type f -name '*openppp2*.zip*' -exec rm {} + && wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/appsettings.json && nano appsettings.json && screen -S ppp
+apt update && apt install sudo -y && sudo apt install ufw screen unzip wget -y  && mkdir ppp ; cd ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-aarch64.zip && unzip -o openppp2*.zip 'ppp' && unzip -n openppp2*.zip -x 'ppp' && find . -type f -name '*openppp2*.zip*' -exec rm {} + && wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/appsettings.json && nano appsettings.json && screen -S ppp
