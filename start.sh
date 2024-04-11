@@ -5,9 +5,10 @@ dpkg --list | grep linux-image
 
 安装依赖，前置，防火墙
 apt update && apt install sudo -y 
-sudo apt install ufw screen unzip wget -y
+sudo apt install screen unzip wget nano -y
 
 配置防火墙
+sudo apt install ufw -y
 sudo ufw allow 22/tcp && sudo ufw allow 20000  #放行22 20000
 sudo ufw enable   #开启ufw
 
