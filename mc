@@ -51,4 +51,4 @@ User=root
 WantedBy=multi-user.target
 
 chmod +x /opt/mcsmanager/start-daemon.sh && systemctl enable mcdaemon.service && systemctl daemon-reload && sudo systemctl start mcdaemon.service && sudo systemctl status mcdaemon.service
-chmod +x /opt/mcsmanager/start-web.sh && systemctl enable start-web.sh && systemctl daemon-reload && sudo systemctl start start-web.sh && sudo systemctl status start-web.sh
+chmod +x /opt/mcsmanager/start-web.sh && systemctl enable mcweb.service && systemctl daemon-reload && sudo systemctl start mcweb.service && sudo systemctl status mcweb.service
