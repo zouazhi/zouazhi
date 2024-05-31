@@ -11,4 +11,4 @@ tar -zxvf example.tar.gz
 
 cd / && sudo find ./ -xdev -type f -size +100M
 
-curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash && sudo apt-get install speedtest && speedtest
+sudo apt-get install curl && curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash && sudo apt-get install speedtest
