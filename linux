@@ -9,4 +9,6 @@ tar -zxvf example.tar.gz
 -v: 表示详细输出，列出被解压的文件。
 -f example.tar.gz: 指定要解压的归档文件的名称为 example.tar.gz。
 
+cd / && sudo find ./ -xdev -type f -size +100M
+
 curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash && sudo apt-get install speedtest && speedtest
