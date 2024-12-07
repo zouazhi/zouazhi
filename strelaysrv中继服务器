@@ -1,2 +1,2 @@
-cd /opt && wget https://github.com/syncthing/relaysrv/releases/download/v1.28.0/strelaysrv-linux-amd64-v1.28.0.tar.gz && 
+cd /opt && wget https://github.com/syncthing/relaysrv/releases/download/v1.28.0/strelaysrv-linux-amd64-v1.28.0.tar.gz && tar -zxvf strelaysrv-linux-amd64-v1.28.0.tar.gz && cd strelaysrv-linux-amd64-v1.28.0 && chmod +x strelaysrv && ./strelaysrv -pools=""  -protocol=tcp
 
