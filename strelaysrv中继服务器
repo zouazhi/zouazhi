@@ -1,1 +1,2 @@
-cd /opt &&
+cd /opt && wget https://github.com/syncthing/relaysrv/releases/download/v1.28.0/strelaysrv-linux-amd64-v1.28.0.tar.gz && 
+
