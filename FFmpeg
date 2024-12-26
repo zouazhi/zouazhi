@@ -1,1 +1,1 @@
-
+ffmpeg -i .\Asia.2024.S01E01.Beneath.the.Waves.HLG.2160p.iP.WEB-DL.AAC2.0.H.265-RAWR.mkv -vf "scale=1920:1080" -c:v hevc_nvenc -b:v 10000k -c:a copy AsiaS01E01.mkv
