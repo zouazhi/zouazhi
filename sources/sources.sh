@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# 安装 wget 和 curl 工具
-sudo apt update
-sudo apt install -y wget curl
-
 # 获取主机名
 hostname=$(hostname)
 
