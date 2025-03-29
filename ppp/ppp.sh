@@ -64,9 +64,9 @@ function get_version_and_download() {
 
         # 获取对应版本的发布信息
         if [[ "$version" == "$latest_version" ]]; then
-            release_info=$(curl -s https://api.github.com/repos/rebecca554owen/toys/releases/latest)
+            release_info=$(curl -s https://api.github.com/repos/liulilittle/openppp2/releases/latest)
         else
-            release_info=$(curl -s "https://api.github.com/repos/rebecca554owen/toys/releases/tags/$version")
+            release_info=$(curl -s "https://api.github.com/repos/liulilittle/openppp2/releases/tags/$version")
         fi
 
         [[ -z "$release_info" ]] && { echo "获取版本 $version 的发布信息失败，请检查版本号是否正确。"; exit 1; }
