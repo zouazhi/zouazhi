@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# 获取主机名
+hostname=$(hostname)
+
+# 获取 IPv4 地址
+ipv4_address=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)
+
+# 更新 /etc/hosts 文件
+if ! grep -q "$hostname" /etc/hosts; then
+    echo "$ipv4_address $hostname" | sudo tee -a /etc/hosts > /dev/null
+fi
+
 # 设置网络优先使用 IPv4
 sudo sed -i 's/^#precedence ::ffff:0:0\/96  100/precedence ::ffff:0:0\/96  1000/' /etc/gai.conf
 echo 'Acquire::ForceIPv4 "true";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4 > /dev/null
