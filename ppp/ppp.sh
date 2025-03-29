@@ -350,7 +350,7 @@ function modify_config() {
     declare -A config_changes=(
         [".concurrent"]=${concurrent}
         [".cdn"]="[]"
-        [".vmem.size"]=0
+        [".vmem.size"]=32
         [".tcp.listen.port"]=${listen_port}
         [".udp.listen.port"]=${listen_port}
         [".udp.static.\"keep-alived\""]="[1,10]"
