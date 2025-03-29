@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 设置网络优先使用 IPv4
+sudo sed -i 's/^#precedence ::ffff:0:0\/96  100/precedence ::ffff:0:0\/96  1000/' /etc/gai.conf
+echo 'Acquire::ForceIPv4 "true";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4 > /dev/null
+
 # 备份原有的软件源文件
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 
@@ -24,4 +28,11 @@ EOF
 
 # 更新软件包索引
 apt update
+
+# 恢复网络配置
+sudo sed -i 's/^precedence ::ffff:0:0\/96  1000/#precedence ::ffff:0:0\/96  100/' /etc/gai.conf
+sudo rm /etc/apt/apt.conf.d/99force-ipv4
+
+# 删除自身脚本
+rm -- "$0"
     
