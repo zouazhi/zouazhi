@@ -3,5 +3,5 @@ sources包括更改VPS优先v4网络访问，备份原有的软件源文件，�
 
 脚本一键运行命令 
 
-<pre class="language-markup">wget -O sources.sh https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/sources.sh && bash sources.sh<code></code></pre>
+<pre class="language-markup">wget -O sources.sh [https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/sources.sh](https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/sources/sources.sh) && bash sources.sh<code></code></pre>
 
