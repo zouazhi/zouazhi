@@ -471,7 +471,7 @@ function show_menu() {
                 echo "无效选项：$REPLY，请输入 1-11 之间的数字。"
                 ;;
         esac
-        # 每次操作后重新显示菜单
-        show_menu
     done
 }
+ # 每次操作后重新显示菜单
+ show_menu
