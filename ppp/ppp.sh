@@ -321,8 +321,8 @@ function modify_config() {
     public_ip=${public_ip:-$default_public_ip}
 
     while true; do
-        read -p "请输入VPS 端口 [默认: 2025]: " listen_port
-        listen_port=${listen_port:-2025}
+        read -p "请输入VPS 端口 [默认: 20000]: " listen_port
+        listen_port=${listen_port:-20000}
     
         if [[ "$listen_port" =~ ^[0-9]+$ ]] && [ "$listen_port" -ge 1 ] && [ "$listen_port" -le 65535 ]; then
             break
