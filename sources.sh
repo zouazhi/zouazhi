@@ -8,7 +8,7 @@ sudo apt install -y wget curl
 hostname=$(hostname)
 
 # 获取 IPv4 地址
-ipv4_address=$(curl -s https://ip.sb)
+ipv4_address=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)
 
 # 更新 /etc/hosts 文件
 if ! grep -q "$hostname" /etc/hosts; then
