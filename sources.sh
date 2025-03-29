@@ -33,10 +33,6 @@ EOF
 # 更新软件包索引
 apt update
 
-# 恢复网络配置
-sudo sed -i 's/^precedence ::ffff:0:0\/96  1000/#precedence ::ffff:0:0\/96  100/' /etc/gai.conf
-sudo rm /etc/apt/apt.conf.d/99force-ipv4
-
 # 删除自身脚本
 rm -- "$0"
     
