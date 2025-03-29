@@ -412,66 +412,67 @@ function modify_config() {
 
 # 显示主菜单
 function show_menu() {
-    clear  # 清屏以提高可读性
-    echo "===== PPP 管理脚本 ====="
-    echo "请选择一个操作："
-    echo "  1) 安装PPP"
-    echo "  2) 启动PPP"
-    echo "  3) 停止PPP"
-    echo "  4) 重启PPP"
-    echo "  5) 更新PPP"
-    echo "  6) 卸载PPP"
-    echo "  7) 查看PPP会话"
-    echo "  8) 查看配置"
-    echo "  9) 编辑配置项"
-    echo " 10) 修改配置文件"
-    echo " 11) 退出"
-    echo "========================"
+    while true; do
+        clear
+        echo "===== PPP 管理脚本 ====="
+        echo "请选择一个操作："
+        echo "  1) 安装PPP"
+        echo "  2) 启动PPP"
+        echo "  3) 停止PPP"
+        echo "  4) 重启PPP"
+        echo "  5) 更新PPP"
+        echo "  6) 卸载PPP"
+        echo "  7) 查看PPP会话"
+        echo "  8) 查看配置"
+        echo "  9) 编辑配置项"
+        echo " 10) 修改配置文件"
+        echo " 11) 退出"
+        echo "========================"
 
-    PS3='请输入选项编号 (1-11): '  # 自定义提示符
-    options=("安装PPP" "启动PPP" "停止PPP" "重启PPP" "更新PPP" "卸载PPP" "查看PPP会话" "查看配置" "编辑配置项" "修改配置文件" "退出")
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "安装PPP")
+        read -p "请输入选项编号 (1-11): " choice
+
+        case $choice in
+            1)
                 install_ppp
                 ;;
-            "启动PPP")
+            2)
                 start_ppp
                 ;;
-            "停止PPP")
+            3)
                 stop_ppp
                 ;;
-            "重启PPP")
+            4)
                 restart_ppp
                 ;;
-            "更新PPP")
+            5)
                 update_ppp
                 ;;
-            "卸载PPP")
+            6)
                 uninstall_ppp
                 ;;
-            "查看PPP会话")
+            7)
                 view_ppp_session
                 ;;
-            "查看配置")
+            8)
                 view_config
                 ;;
-            "编辑配置项")
+            9)
                 edit_config_item
                 ;;
-            "修改配置文件")
+            10)
                 modify_config
                 ;;
-            "退出")
+            11)
                 echo "退出脚本..."
-                break
+                exit 0
                 ;;
             *)
-                echo "无效选项：$REPLY，请输入 1-11 之间的数字。"
+                echo "无效选项：$choice，请输入 1-11 之间的数字。"
+                read -p "按回车键继续..."
                 ;;
         esac
     done
 }
- # 每次操作后重新显示菜单
- show_menu
+
+# 脚本入口
+show_menu
