@@ -350,8 +350,6 @@ function modify_config() {
     declare -A config_changes=(
         [".concurrent"]=${concurrent}
         [".cdn"]="[]"
-        [".ip.public"]="${public_ip}"
-        [".ip.interface"]="${interface_ip}"
         [".vmem.size"]=0
         [".tcp.listen.port"]=${listen_port}
         [".udp.listen.port"]=${listen_port}
