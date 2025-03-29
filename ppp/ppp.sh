@@ -7,7 +7,7 @@ OS=""
 if [ -f /etc/redhat-release ]; then
     OS="CentOS"
 elif [ -f /etc/os-release ]; then
-    . /etc/os-release
+   . /etc/os-release
     OS=$ID
 fi
 
@@ -335,12 +335,17 @@ function modify_config() {
     read -p "请输入内网IP地址（服务端默认为${default_interface_ip}，客户端可写内网IP地址）: " interface_ip
     interface_ip=${interface_ip:-$default_interface_ip}
 
-    concurrent=$(nproc)
+    # 指定并发数为 5
+    concurrent=5
+
     if command -v uuidgen >/dev/null 2>&1; then
         client_guid=$(uuidgen)
     else
         client_guid=$(openssl rand -hex 16 | sed 's/\(........\)\(....\)\(....\)\(....\)\(............\)/\1-\2-\3-\4-\5/')
     fi
+
+    # 修改此处，将公网 IP 替换进去
+    servers_config="[\"${public_ip}:${listen_port}\"]"
 
     declare -A config_changes=(
         [".concurrent"]=${concurrent}
@@ -352,7 +357,7 @@ function modify_config() {
         [".udp.listen.port"]=${listen_port}
         [".udp.static.\"keep-alived\""]="[1,10]"
         [".udp.static.aggligator"]=0
-        [".udp.static.servers"]="[\"${public_ip}:${listen_port}\"]"
+        [".udp.static.servers"]="${servers_config}"
         [".server.log"]="/dev/null"
         [".server.mapping"]=true
         [".server.backend"]=""
@@ -462,3 +467,4 @@ function show_menu() {
 
 # 脚本入口
 show_menu
+    
