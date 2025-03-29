@@ -353,10 +353,6 @@ function modify_config() {
         [".udp.static.\"keep-alived\""]="[1,10]"
         [".udp.static.aggligator"]=0
         [".udp.static.servers"]="[\"${public_ip}:${listen_port}\"]"
-        [".websocket.host"]="openppp2.ai"
-        [".websocket.path"]="/tun"
-        [".websocket.listen.ws"]=2095
-        [".websocket.listen.wss"]=2096
         [".server.log"]="/dev/null"
         [".server.mapping"]=true
         [".server.backend"]=""
