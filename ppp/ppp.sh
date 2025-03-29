@@ -298,7 +298,7 @@ function modify_config() {
     
     if [ ! -f "${ppp_config}" ]; then
         echo "下载默认配置文件..."
-        if ! wget -q -O "${ppp_config}" "https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/appsettings.json"; then
+        if ! wget -q -O "${ppp_config}" "https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/ppp/appsettings.json"; then
             echo "下载配置文件失败，请检查网络连接"
             return 1
         fi
