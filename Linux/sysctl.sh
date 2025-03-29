@@ -116,16 +116,8 @@ net.core.default_qdisc=fq"
 
 # 将配置文本追加到 /etc/sysctl.conf 文件
 echo -e "$config_text" | sudo tee -a /etc/sysctl.conf > /dev/null
-if [ $? -ne 0 ]; then
-    echo "写入 /etc/sysctl.conf 文件失败，请检查权限。"
-    exit 1
-fi
 
 # 执行 sysctl -p 命令使配置生效
 sudo sysctl -p
-if [ $? -ne 0 ]; then
-    echo "执行 sysctl -p 命令失败，请检查配置或权限。"
-    exit 1
-fi
 
-echo "配置已成功写入 /etc/sysctl.conf 并生效。"
+echo "配置已尝试写入 /etc/sysctl.conf 并执行加载操作。"
