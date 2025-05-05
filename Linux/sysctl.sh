@@ -1,19 +1,4 @@
-#!/bin/bash
-
-# 检查脚本本身是否具有执行权限，如果没有则尝试赋予执行权限
-if [ ! -x "$0" ]; then
-    echo "脚本没有执行权限，正在尝试赋予执行权限..."
-    chmod +x "$0"
-    if [ $? -ne 0 ]; then
-        echo "赋予执行权限失败，请手动赋予脚本执行权限。"
-        exit 1
-    else
-        echo "成功赋予脚本执行权限。"
-    fi
-fi
-
-# 要添加的配置文本
-config_text="vm.overcommit_memory=1
+sudo cp /etc/sysctl.conf /etc/sysctl.conf.bk_$(date +%Y%m%d_%H%M%S) && sudo sh -c 'echo "vm.overcommit_memory=1
 net.core.rps_sock_flow_entries=32768 #rfs 设置此文件至同时活跃连接数的最大预期值
 #net.ipv4.icmp_echo_ignore_all=1 #禁止ping
 #net.ipv4.icmp_echo_ignore_broadcasts=1
@@ -112,12 +97,4 @@ net.ipv4.udp_mem=262144 524288 1048576
 
 # BBR
 net.ipv4.tcp_congestion_control=bbr
-net.core.default_qdisc=fq"
-
-# 将配置文本追加到 /etc/sysctl.conf 文件
-echo -e "$config_text" | sudo tee -a /etc/sysctl.conf > /dev/null
-
-# 执行 sysctl -p 命令使配置生效
-sudo sysctl -p
-
-echo "配置已尝试写入 /etc/sysctl.conf 并执行加载操作。"
+net.core.default_qdisc=fq" > /etc/sysctl.conf' && sudo sysctl -p
