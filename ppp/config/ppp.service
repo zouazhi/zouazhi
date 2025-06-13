@@ -1,0 +1,13 @@
+[Unit]
+Description=PPP Client Service
+After=network.target
+
+[Service]
+ExecStart=/opt/ppp/ppp --mode=server
+WorkingDirectory=/opt/ppp
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
