@@ -1,4 +1,4 @@
-一脚脚本
+一脚脚本（不好用）
 
 <pre class="language-markup">wget -O ppp.sh https://raw.githubusercontent.com/zouazhi/zouazhi/refs/heads/main/ppp/ppp.sh && bash ppp.sh<code></code></pre>
 
