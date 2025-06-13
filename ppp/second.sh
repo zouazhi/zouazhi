@@ -20,7 +20,7 @@ chmod +x /opt/ppp/ && chmod +x /opt/ppp/ppp && systemctl daemon-reload && system
 
 
 
-mkdir /opt/ppp && cd /opt/ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip -o openppp2*.zip 'ppp' && unzip -n openppp2*.zip -x 'ppp' && find . -type f -name '*openppp2*.zip*' -exec rm {} + && wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json && nano appsettings.json
+mkdir /opt/ppp && cd /opt/ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip "openppp2"* ppp appsettings.json && rm "openppp2"* && wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json && nano appsettings.json
 
 
 wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service && chmod +x /opt/ppp/ && chmod +x /opt/ppp/ppp && systemctl daemon-reload && systemctl enable ppp.service  && systemctl start ppp.service && systemctl status ppp.service
