@@ -3,7 +3,7 @@ Description=PPP Client Service
 After=network.target
 
 [Service]
-ExecStart=/opt/ppp/ppp --mode=server
+ExecStart=/opt/ppp/ppp --mode=server > ./ppp.log
 WorkingDirectory=/opt/ppp
 Restart=always
 User=root
