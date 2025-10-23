@@ -19,12 +19,12 @@ check_and_fix_permissions() {
 
 # 显示操作选项菜单
 echo "请选择操作："
-echo "1) 安装（完整安装 openppp2 和配置）"
+echo "1) 安装（完整安装openppp2和配置）"
 echo "2) 改完配置后的系统服务写入（跳过拉取和修改，直接配置服务）"
-echo "3) 更新（更新 openppp2 二进制文件并配置服务）"
-echo "4) 重启（重启 ppp.service）"
-echo "5) 停止（停止 ppp.service）"
-echo "6) 查看运行状况（查看 /opt/ppp/ppp.log）"
+echo "3) 更新（更新openppp2 二进制文件并配置服务）"
+echo "4) 重启（重启ppp.service）"
+echo "5) 停止（停止ppp.service）"
+echo "6) 查看运行状况（查看/opt/ppp/ppp.log）"
 read -p "请输入选项 (1/2/3/4/5/6)： " OPERATION
 
 case $OPERATION in
