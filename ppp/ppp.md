@@ -8,7 +8,7 @@
 
 拉取配置文件
 <pre class="language-markup"> wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json <code></code></pre>
-自新=行修改配置文件
+自行修改配置文件
 
 拉取系统服务
 <pre class="language-markup">wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service && chmod +x /opt/ppp/ && chmod +x /opt/ppp/ppp && systemctl daemon-reload && systemctl enable ppp.service  && systemctl start ppp.service && systemctl status ppp.service<code></code></pre>
