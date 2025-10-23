@@ -249,7 +249,12 @@ while true; do
             echo "alias ppp='sudo bash /root/ppp_install.sh'" >> "$PROFILE_SCRIPT"
             chmod +x "$PROFILE_SCRIPT"
             echo "✅ 已添加全局别名到 $PROFILE_SCRIPT：alias ppp='sudo bash /root/ppp_install.sh'"
-            echo "全局配置已完成！新终端将自动生效，或运行 'source $PROFILE_SCRIPT' 立即应用。"
+
+            # 立即加载别名到当前 shell 会话
+            source "$PROFILE_SCRIPT"
+            echo "✅ 已加载别名到当前会话，'ppp' 命令现在可用"
+
+            echo "全局配置已完成！新终端将自动生效，当前终端已立即生效。"
             ;;
         8)
             # 卸载 ppp
