@@ -251,10 +251,18 @@ while true; do
             echo "✅ 已添加全局别名到 $PROFILE_SCRIPT：alias ppp='sudo bash /root/ppp_install.sh'"
 
             # 立即加载别名到当前 shell 会话
-            source "$PROFILE_SCRIPT"
-            echo "✅ 已加载别名到当前会话，'ppp' 命令现在可用"
+             source "$PROFILE_SCRIPT"
+             echo "✅ 已加载别名到当前会话，'ppp' 命令现在可用"
 
-            echo "全局配置已完成！新终端将自动生效，当前终端已立即生效。"
+             # 自动让 root 的 .bashrc 永久加载此别名文件（避免 su/sudo -i 无法继承环境）
+             BASHRC="/root/.bashrc"
+             if ! grep -q "source /etc/profile.d/ppp.sh" "$BASHRC"; then
+                 echo "source /etc/profile.d/ppp.sh" >> "$BASHRC"
+                 echo "✅ 已在 $BASHRC 中添加 source /etc/profile.d/ppp.sh"
+             else
+                 echo "✅ $BASHRC 已包含 source /etc/profile.d/ppp.sh"
+             fi
+             echo "全局配置已完成！当前终端和所有后续 bash 会话均可直接使用 'ppp' 命令。"
             ;;
         8)
             # 卸载 ppp
