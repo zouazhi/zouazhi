@@ -30,7 +30,7 @@ while true; do
     echo "7) 配置环境变量（设置全局命令行别名，使输入 'ppp' 调用此脚本）"
     echo "8) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
     echo "9) 退出"
-    read -p "请输入选项(1/2/3/4/5/6/7/8/9)： " OPERATION
+    read -p "请输入选项 (1/2/3/4/5/6/7/8/9)： " OPERATION
 
     case $OPERATION in
         1)
@@ -270,11 +270,15 @@ while true; do
             # 禁用服务
             if systemctl is-enabled --quiet ppp.service; then
                 systemctl disable ppp.service && echo "✅ 已禁用 ppp.service"
+            else
+                echo "⚠️ ppp.service 未启用，无需禁用"
             fi
 
             # 删除服务文件
             if [ -f /etc/systemd/system/ppp.service ]; then
                 rm -f /etc/systemd/system/ppp.service && echo "✅ 已删除 ppp.service 文件"
+            else
+                echo "⚠️ ppp.service 文件不存在，无需删除"
             fi
 
             # 重载 systemd
@@ -291,9 +295,17 @@ while true; do
             PROFILE_SCRIPT="/etc/profile.d/ppp.sh"
             if [ -f "$PROFILE_SCRIPT" ]; then
                 rm -f "$PROFILE_SCRIPT" && echo "✅ 已移除全局别名文件 $PROFILE_SCRIPT"
+            else
+                echo "⚠️ $PROFILE_SCRIPT 文件不存在，无需删除"
             fi
 
-            echo "✅ ppp 卸载完成！请重新登录或运行 'source /etc/profile' 以更新环境变量。"
+            # 立即移除当前 shell 会话中的 ppp 别名
+            unalias ppp 2>/dev/null && echo "✅ 已移除当前会话中的 'ppp' 别名"
+
+            # 重新加载 /etc/profile 以确保环境变量同步
+            source /etc/profile 2>/dev/null && echo "✅ 已重新加载 /etc/profile，环境变量已同步"
+
+            echo "✅ ppp 卸载完成！当前终端已立即生效，新终端无需额外操作。"
             exit 0
             ;;
         9)
