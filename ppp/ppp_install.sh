@@ -30,7 +30,7 @@ while true; do
     echo "7) 配置环境变量（设置全局命令行别名，使输入 'ppp' 调用此脚本）"
     echo "8) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
     echo "9) 退出"
-    read -p "请输入选项： " OPERATION
+    read -p "请输入选项(1/2/3/4/5/6/7/8/9)： " OPERATION
 
     case $OPERATION in
         1)
