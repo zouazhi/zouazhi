@@ -195,6 +195,7 @@ case $OPERATION in
         ;;
     4)
         # 重启 ppp.service
+        systemctl daemon-reload && \
         systemctl restart ppp.service && \
         echo "✅ ppp.service 已重启"
 
