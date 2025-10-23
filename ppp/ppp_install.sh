@@ -17,8 +17,13 @@ check_and_fix_permissions() {
     fi
 }
 
+# 调试：确认脚本开始执行
+echo "✅ 脚本启动，进入主循环"
+
 # 主循环
 while true; do
+    # 调试：确认菜单打印
+    echo "✅ 开始打印菜单"
     echo "请选择操作："
     echo "1) 安装（完整安装openppp2和配置）"
     echo "2) 改完配置后的系统服务写入（跳过拉取和修改，直接配置服务）"
@@ -26,10 +31,9 @@ while true; do
     echo "4) 重启（重启ppp.service）"
     echo "5) 停止（停止ppp.service）"
     echo "6) 查看运行状况（查看/opt/ppp/ppp.log）"
-    echo "7) 配置环境变量（设置全局命令行别名，使输入 'ppp' 调用此脚本）"
-    echo "8) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
-    echo "9) 退出"
-    read -p "请输入选项 (1/2/3/4/5/6/7/8/9)： " OPERATION
+    echo "7) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
+    echo "8) 退出"
+    read -p "请输入选项 (1/2/3/4/5/6/7/8)： " OPERATION
 
     case $OPERATION in
         1)
@@ -163,40 +167,6 @@ while true; do
             fi
             ;;
         7)
-            SCRIPT_PATH="/root/ppp_install.sh"
-            PROFILE_SCRIPT="/etc/profile.d/ppp.sh"
-
-            if [ ! -f "$SCRIPT_PATH" ]; then
-                echo "错误：脚本文件 $SCRIPT_PATH 不存在"
-                continue
-            fi
-            check_and_fix_permissions "$SCRIPT_PATH" "ppp_install.sh 脚本"
-
-            if [ -f "$PROFILE_SCRIPT" ]; then
-                cp "$PROFILE_SCRIPT" "$PROFILE_SCRIPT.bak.$(date +%Y%m%d_%H%M%S)"
-            fi
-
-            echo "# ppp 别名：调用 /root/ppp_install.sh" > "$PROFILE_SCRIPT"
-            echo "alias ppp='sudo bash /root/ppp_install.sh'" >> "$PROFILE_SCRIPT"
-            chmod +x "$PROFILE_SCRIPT"
-            echo "✅ 已添加全局别名到 $PROFILE_SCRIPT"
-
-            # 立即加载别名到当前 shell 会话
-            source "$PROFILE_SCRIPT"
-            echo "✅ 已加载别名到当前会话，'ppp' 命令现在可用"
-
-            # 自动添加到 root 的 .bashrc
-            BASHRC="/root/.bashrc"
-            if ! grep -q "source /etc/profile.d/ppp.sh" "$BASHRC"; then
-                echo "source /etc/profile.d/ppp.sh" >> "$BASHRC"
-                echo "✅ 已在 $BASHRC 中添加 source /etc/profile.d/ppp.sh"
-            else
-                echo "✅ $BASHRC 已包含 source /etc/profile.d/ppp.sh"
-            fi
-
-            echo "✅ 全局配置完成：'ppp' 命令现已在所有 Shell 中可用"
-            ;;
-        8)
             echo "正在卸载 ppp..."
             if systemctl is-active --quiet ppp.service; then
                 systemctl stop ppp.service && echo "✅ 已停止 ppp.service"
@@ -204,15 +174,14 @@ while true; do
             if systemctl is-enabled --quiet ppp.service; then
                 systemctl disable ppp.service && echo "✅ 已禁用 ppp.service"
             fi
-            rm -f /etc/systemd/system/ppp.service
+            rm -f /etc/systemd/system/ppp.service && echo "✅ 已删除 ppp.service 文件"
             systemctl daemon-reload && echo "✅ 已重载 systemd"
             rm -rf /opt/ppp && echo "✅ 已删除 /opt/ppp"
-            rm -f /etc/profile.d/ppp.sh && echo "✅ 已移除全局别名文件"
-            sed -i '/source \/etc\/profile\.d\/ppp\.sh/d' /root/.bashrc && echo "✅ 已从 .bashrc 移除加载行"
-            unalias ppp 2>/dev/null
-            echo "✅ 卸载完成"
+            echo "✅ 请手动删除脚本文件 /root/ppp_install.sh 以完成清理（命令：rm /root/ppp_install.sh）"
+            echo "✅ ppp 卸载完成！"
+            exit 0
             ;;
-        9)
+        8)
             echo "✅ 退出脚本"
             exit 0
             ;;
@@ -221,24 +190,6 @@ while true; do
             exit 1
             ;;
     esac
-
-    # 写入系统服务（选项 1、2）
-    if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "2" ]; then
-        wget -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service && \
-        chmod +x /opt/ppp/ppp && \
-        systemctl daemon-reload && \
-        systemctl enable ppp.service && \
-        systemctl start ppp.service && \
-        echo "✅ ppp.service 已配置并启动"
-
-        SERVICE_STATUS=$(systemctl is-active ppp.service)
-        if [ "$SERVICE_STATUS" = "active" ]; then
-            echo "✅ 服务状态：运行中"
-        else
-            echo "❌ 服务状态：失败"
-            systemctl status ppp.service
-        fi
-    fi
 
     echo "✅ 当前操作完成！"
     echo
