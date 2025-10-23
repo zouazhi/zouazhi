@@ -300,10 +300,17 @@ while true; do
             fi
 
             # 立即移除当前 shell 会话中的 ppp 别名
-            unalias ppp 2>/dev/null && echo "✅ 已移除当前会话中的 'ppp' 别名"
+            unalias ppp 2>/dev/null && echo "✅ 已移除当前会话中的 'ppp' 别名" || echo "⚠️ 未找到 'ppp' 别名，无需移除"
 
             # 重新加载 /etc/profile 以确保环境变量同步
-            source /etc/profile 2>/dev/null && echo "✅ 已重新加载 /etc/profile，环境变量已同步"
+            source /etc/profile 2>/dev/null && echo "✅ 已重新加载 /etc/profile，环境变量已同步" || echo "⚠️ 无法加载 /etc/profile，请手动运行 'source /etc/profile'"
+
+            # 验证 ppp 别名是否已移除
+            if alias ppp >/dev/null 2>&1; then
+                echo "⚠️ 警告：'ppp' 别名仍然存在，可能来自其他配置文件（如 ~/.bashrc），请检查"
+            else
+                echo "✅ 验证：'ppp' 别名已成功移除"
+            fi
 
             echo "✅ ppp 卸载完成！当前终端已立即生效，新终端无需额外操作。"
             exit 0
