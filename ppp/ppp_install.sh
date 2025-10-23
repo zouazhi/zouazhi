@@ -263,22 +263,16 @@ while true; do
             # 停止服务
             if systemctl is-active --quiet ppp.service; then
                 systemctl stop ppp.service && echo "✅ 已停止 ppp.service"
-            else
-                echo "⚠️ ppp.service 未运行，无需停止"
             fi
 
             # 禁用服务
             if systemctl is-enabled --quiet ppp.service; then
                 systemctl disable ppp.service && echo "✅ 已禁用 ppp.service"
-            else
-                echo "⚠️ ppp.service 未启用，无需禁用"
             fi
 
             # 删除服务文件
             if [ -f /etc/systemd/system/ppp.service ]; then
                 rm -f /etc/systemd/system/ppp.service && echo "✅ 已删除 ppp.service 文件"
-            else
-                echo "⚠️ ppp.service 文件不存在，无需删除"
             fi
 
             # 重载 systemd
@@ -287,32 +281,31 @@ while true; do
             # 删除 /opt/ppp 目录
             if [ -d "/opt/ppp" ]; then
                 rm -rf /opt/ppp && echo "✅ 已删除 /opt/ppp 目录"
-            else
-                echo "⚠️ /opt/ppp 目录不存在，无需删除"
             fi
 
             # 清理环境变量
             PROFILE_SCRIPT="/etc/profile.d/ppp.sh"
             if [ -f "$PROFILE_SCRIPT" ]; then
                 rm -f "$PROFILE_SCRIPT" && echo "✅ 已移除全局别名文件 $PROFILE_SCRIPT"
-            else
-                echo "⚠️ $PROFILE_SCRIPT 文件不存在，无需删除"
             fi
 
             # 立即移除当前 shell 会话中的 ppp 别名
-            unalias ppp 2>/dev/null && echo "✅ 已移除当前会话中的 'ppp' 别名" || echo "⚠️ 未找到 'ppp' 别名，无需移除"
+            unalias ppp 2>/dev/null
 
             # 重新加载 /etc/profile 以确保环境变量同步
-            source /etc/profile 2>/dev/null && echo "✅ 已重新加载 /etc/profile，环境变量已同步" || echo "⚠️ 无法加载 /etc/profile，请手动运行 'source /etc/profile'"
+            source /etc/profile 2>/dev/null
 
-            # 验证 ppp 别名是否已移除
-            if alias ppp >/dev/null 2>&1; then
-                echo "⚠️ 警告：'ppp' 别名仍然存在，可能来自其他配置文件（如 ~/.bashrc），请检查"
-            else
-                echo "✅ 验证：'ppp' 别名已成功移除"
-            fi
+            # 创建临时脚本以在父 shell 中移除 ppp 别名
+            TEMP_SCRIPT="/tmp/remove_ppp_alias.sh"
+            echo "#!/bin/bash" > "$TEMP_SCRIPT"
+            echo "unalias ppp 2>/dev/null" >> "$TEMP_SCRIPT"
+            chmod +x "$TEMP_SCRIPT"
+            echo "✅ 请运行以下命令以确保 'ppp' 别名在当前终端移除：source $TEMP_SCRIPT"
 
-            echo "✅ ppp 卸载完成！当前终端已立即生效，新终端无需额外操作。"
+            # 提示手动删除 ppp_install.sh
+            echo "✅ 请手动删除脚本文件 /root/ppp_install.sh 以完成清理（命令：rm /root/ppp_install.sh）"
+
+            echo "✅ ppp 卸载完成！当前终端需运行 'source $TEMP_SCRIPT'，新终端已生效。"
             exit 0
             ;;
         9)
