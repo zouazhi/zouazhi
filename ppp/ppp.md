@@ -1,5 +1,5 @@
 一键脚本
-<pre class="language-markup">wget https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/install.sh <code></code></pre>
+<pre class="language-markup">wget https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/install.sh && chmod +x install.sh &&./install.sh <code></code></pre>
 
 
 
