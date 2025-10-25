@@ -17,6 +17,34 @@ check_and_fix_permissions() {
     fi
 }
 
+# 提示用户是否替换已有文件
+prompt_replace_file() {
+    local file="$1"
+    local url="$2"
+    local desc="$3"
+    local output_dir="$4"
+    local wget_cmd="wget -4"
+
+    if [ -n "$output_dir" ]; then
+        wget_cmd="$wget_cmd -P $output_dir"
+    else
+        wget_cmd="$wget_cmd -O $file"
+    fi
+
+    if [ -f "$file" ]; then
+        echo "警告：$desc 已存在（$file）"
+        read -p "是否替换现有文件？(y/n，默认 n)： " REPLACE
+        if [ "$REPLACE" != "y" ] && [ "$REPLACE" != "Y" ]; then
+            echo "✅ 保留现有 $desc，跳过拉取"
+            return 0
+        fi
+    fi
+
+    $wget_cmd "$url" || { echo "错误：无法下载 $desc"; return 1; }
+    echo "✅ $desc 拉取完成"
+    return 0
+}
+
 # 调试：确认脚本开始执行
 echo "✅ 脚本启动，进入主循环"
 
@@ -65,10 +93,9 @@ while true; do
             echo "✅ uuidgen 安装完成"
 
             mkdir -p /opt/ppp && cd /opt/ppp
-            if [ -f "/opt/ppp/ppp" ]; then
-                echo "警告：检测到已存在 ppp 文件，将被覆盖"
-            fi
-            wget -4 -O openppp2-linux-amd64.zip https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip || { echo "错误：无法下载 openppp2-linux-amd64.zip"; continue; }
+            prompt_replace_file "/opt/ppp/openppp2-linux-amd64.zip" \
+                "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
+                "openppp2-linux-amd64.zip" || continue
             unzip -o openppp2-linux-amd64.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 安装完成" && \
@@ -76,12 +103,10 @@ while true; do
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
 
-            if [ -f "/opt/ppp/ppp.sh" ]; then
-                echo "警告：ppp.sh 已存在，将被覆盖"
-            fi
-            wget -4 -O ppp.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh || { echo "错误：无法下载 ppp.sh"; continue; }
-            chmod +x ppp.sh && \
-            echo "✅ 启动脚本 ppp.sh 拉取完成"
+            prompt_replace_file "/opt/ppp/ppp.sh" \
+                "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh" \
+                "ppp.sh 启动脚本" || continue
+            chmod +x ppp.sh
 
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
 
@@ -97,11 +122,9 @@ while true; do
                 continue
             fi
 
-            if [ -f "/opt/ppp/appsettings.json" ]; then
-                echo "警告：appsettings.json 已存在，将被覆盖"
-            fi
-            wget -4 -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json || { echo "错误：无法下载 appsettings.json"; continue; }
-            echo "✅ 配置文件 appsettings.json 拉取完成"
+            prompt_replace_file "/opt/ppp/appsettings.json" \
+                "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json" \
+                "appsettings.json 配置文件" || continue
 
             read -p "请输入新的 IP 地址（默认 1.1.1.1）： " NEW_IP
             read -p "请输入新的端口（默认 20000）： " NEW_PORT
@@ -125,22 +148,30 @@ while true; do
                 continue
             fi
 
+            # 生成 16 位随机 protocol-key 和 transport-key（字母数字，包含大小写）
+            PROTOCOL_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
+            TRANSPORT_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
+            echo "✅ 已生成随机 protocol-key：$PROTOCOL_KEY"
+            echo "✅ 已生成随机 transport-key：$TRANSPORT_KEY"
+
             cp appsettings.json appsettings.json.bak && echo "✅ 已备份配置文件"
 
-            jq --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" '
+            jq --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
+               --arg pkey "$PROTOCOL_KEY" --arg tkey "$TRANSPORT_KEY" '
               .tcp.listen.port = ($port | tonumber) |
               .udp.listen.port = ($port | tonumber) |
               .udp.static.servers[0] = ($ip + ":" + $port) |
               .client.server = ("ppp://" + $ip + ":" + $port) |
-              .client.guid = $guid
+              .client.guid = $guid |
+              .key."protocol-key" = $pkey |
+              .key."transport-key" = $tkey
             ' appsettings.json > temp.json && mv temp.json appsettings.json && \
             echo "✅ 已更新配置"
 
             # 拉取系统服务并启动
-            if [ -f "/etc/systemd/system/ppp.service" ]; then
-                echo "警告：ppp.service 已存在，将被覆盖"
-            fi
-            wget -4 -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service || { echo "错误：无法下载 ppp.service"; continue; }
+            prompt_replace_file "/etc/systemd/system/ppp.service" \
+                "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
+                "ppp.service 系统服务文件" "/etc/systemd/system" || continue
             chmod +x /opt/ppp/ && \
             chmod +x /opt/ppp/ppp && \
             systemctl daemon-reload && \
@@ -162,10 +193,9 @@ while true; do
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
 
             # 拉取系统服务并启动
-            if [ -f "/etc/systemd/system/ppp.service" ]; then
-                echo "警告：ppp.service 已存在，将被覆盖"
-            fi
-            wget -4 -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service || { echo "错误：无法下载 ppp.service"; continue; }
+            prompt_replace_file "/etc/systemd/system/ppp.service" \
+                "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
+                "ppp.service 系统服务文件" "/etc/systemd/system" || continue
             chmod +x /opt/ppp/ && \
             chmod +x /opt/ppp/ppp && \
             systemctl daemon-reload && \
@@ -179,10 +209,9 @@ while true; do
             ;;
         3)
             mkdir -p /opt/ppp && cd /opt/ppp
-            if [ -f "/opt/ppp/ppp" ]; then
-                echo "警告：检测到已存在 ppp 文件，将被覆盖"
-            fi
-            wget -4 -O openppp2-linux-amd64.zip https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip || { echo "错误：无法下载 openppp2-linux-amd64.zip"; continue; }
+            prompt_replace_file "/opt/ppp/openppp2-linux-amd64.zip" \
+                "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
+                "openppp2-linux-amd64.zip" || continue
             unzip -o openppp2-linux-amd64.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 更新完成" && \
