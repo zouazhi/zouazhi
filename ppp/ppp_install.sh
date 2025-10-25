@@ -30,7 +30,7 @@ while true; do
     echo "3) 更新（更新openppp2 二进制文件并配置服务）"
     echo "4) 重启（重启ppp.service）"
     echo "5) 停止（停止ppp.service）"
-    echo "6) 查看运行状况（查看/opt/ppp/ppp.log）"
+    echo "6) 查看运行状况（查看/opt/ppp/ppp.log 和 ppp.service 状态）"
     echo "7) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
     echo "8) 退出"
     read -p "请输入选项 (1/2/3/4/5/6/7/8)： " OPERATION
@@ -66,17 +66,20 @@ while true; do
 
             mkdir -p /opt/ppp && cd /opt/ppp
             if [ -f "/opt/ppp/ppp" ]; then
-                echo "检测到已存在 ppp 文件，将重新下载并覆盖"
+                echo "警告：检测到已存在 ppp 文件，将被覆盖"
             fi
-            wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && \
-            unzip -o $(ls | grep -m1 'openppp2.*\.zip') ppp -d . && \
+            wget -4 -O openppp2-linux-amd64.zip https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip || { echo "错误：无法下载 openppp2-linux-amd64.zip"; continue; }
+            unzip -o openppp2-linux-amd64.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 安装完成" && \
-            rm -f $(ls | grep -m1 'openppp2.*\.zip')
+            rm -f openppp2-linux-amd64.zip
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
 
-            wget https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh && \
+            if [ -f "/opt/ppp/ppp.sh" ]; then
+                echo "警告：ppp.sh 已存在，将被覆盖"
+            fi
+            wget -4 -O ppp.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh || { echo "错误：无法下载 ppp.sh"; continue; }
             chmod +x ppp.sh && \
             echo "✅ 启动脚本 ppp.sh 拉取完成"
 
@@ -94,7 +97,10 @@ while true; do
                 continue
             fi
 
-            wget -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json && \
+            if [ -f "/opt/ppp/appsettings.json" ]; then
+                echo "警告：appsettings.json 已存在，将被覆盖"
+            fi
+            wget -4 -O appsettings.json https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json || { echo "错误：无法下载 appsettings.json"; continue; }
             echo "✅ 配置文件 appsettings.json 拉取完成"
 
             read -p "请输入新的 IP 地址（默认 1.1.1.1）： " NEW_IP
@@ -129,6 +135,22 @@ while true; do
               .client.guid = $guid
             ' appsettings.json > temp.json && mv temp.json appsettings.json && \
             echo "✅ 已更新配置"
+
+            # 拉取系统服务并启动
+            if [ -f "/etc/systemd/system/ppp.service" ]; then
+                echo "警告：ppp.service 已存在，将被覆盖"
+            fi
+            wget -4 -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service || { echo "错误：无法下载 ppp.service"; continue; }
+            chmod +x /opt/ppp/ && \
+            chmod +x /opt/ppp/ppp && \
+            systemctl daemon-reload && \
+            systemctl enable ppp.service && \
+            systemctl start ppp.service && \
+            if systemctl is-active --quiet ppp.service; then
+                echo "✅ ppp.service 正在运行（状态：active）"
+            else
+                echo "❌ ppp.service 未运行，请检查日志（使用 journalctl -u ppp.service 或 cat /opt/ppp/ppp.log）"
+            fi
             ;;
         2)
             if [ ! -f "/opt/ppp/appsettings.json" ]; then
@@ -138,14 +160,33 @@ while true; do
             cd /opt/ppp
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
+
+            # 拉取系统服务并启动
+            if [ -f "/etc/systemd/system/ppp.service" ]; then
+                echo "警告：ppp.service 已存在，将被覆盖"
+            fi
+            wget -4 -P /etc/systemd/system https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service || { echo "错误：无法下载 ppp.service"; continue; }
+            chmod +x /opt/ppp/ && \
+            chmod +x /opt/ppp/ppp && \
+            systemctl daemon-reload && \
+            systemctl enable ppp.service && \
+            systemctl start ppp.service && \
+            if systemctl is-active --quiet ppp.service; then
+                echo "✅ ppp.service 正在运行（状态：active）"
+            else
+                echo "❌ ppp.service 未运行，请检查日志（使用 journalctl -u ppp.service 或 cat /opt/ppp/ppp.log）"
+            fi
             ;;
         3)
             mkdir -p /opt/ppp && cd /opt/ppp
-            wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && \
-            unzip -o $(ls | grep -m1 'openppp2.*\.zip') ppp -d . && \
+            if [ -f "/opt/ppp/ppp" ]; then
+                echo "警告：检测到已存在 ppp 文件，将被覆盖"
+            fi
+            wget -4 -O openppp2-linux-amd64.zip https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip || { echo "错误：无法下载 openppp2-linux-amd64.zip"; continue; }
+            unzip -o openppp2-linux-amd64.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 更新完成" && \
-            rm -f $(ls | grep -m1 'openppp2.*\.zip')
+            rm -f openppp2-linux-amd64.zip
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
@@ -160,10 +201,18 @@ while true; do
             systemctl stop ppp.service && echo "✅ ppp.service 已停止"
             ;;
         6)
+            echo "=== 检查 ppp.log ==="
             if [ -f "/opt/ppp/ppp.log" ]; then
                 cat /opt/ppp/ppp.log
             else
                 echo "错误：/opt/ppp/ppp.log 不存在"
+            fi
+            echo
+            echo "=== 检查 ppp.service 状态 ==="
+            if systemctl is-enabled --quiet ppp.service || systemctl is-active --quiet ppp.service; then
+                systemctl status ppp.service
+            else
+                echo "错误：ppp.service 未启用或未运行"
             fi
             ;;
         7)
