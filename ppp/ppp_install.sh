@@ -61,7 +61,7 @@ while true; do
     echo "6) 查看运行状况（查看ppp.log和系统服务状态）"
     echo "7) 卸载 ppp（删除/opt/ppp、停止并删除系统服务并重载）"
     echo "8) 退出"
-    read -p "请输入选项 (1/2/3/4/5/6/7/8)： " OPERATION
+    read -p "请输入选项[1-8]： " OPERATION
 
     case $OPERATION in
         1)
