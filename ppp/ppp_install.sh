@@ -210,7 +210,7 @@ while true; do
             chmod +x /opt/ppp/ppp && \
             systemctl daemon-reload && \
             systemctl enable ppp.service && \
-            systemctl start ppp.service && \
+            systemctl restart ppp.service && \
             if systemctl is-active --quiet ppp.service; then
                 echo "✅ ppp.service 正在运行（状态：active）"
             else
