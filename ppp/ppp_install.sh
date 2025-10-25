@@ -55,11 +55,11 @@ while true; do
     echo "请选择操作："
     echo "1) 安装（完整安装openppp2和配置）"
     echo "2) 改完配置后的系统服务写入（跳过拉取和修改，直接配置服务）"
-    echo "3) 更新（更新openppp2 二进制文件并配置服务）"
+    echo "3) 更新（更新openppp2二进制文件并配置服务）"
     echo "4) 重启（重启ppp.service）"
     echo "5) 停止（停止ppp.service）"
-    echo "6) 查看运行状况（查看/opt/ppp/ppp.log 和 ppp.service 状态）"
-    echo "7) 卸载 ppp（删除 /opt/ppp、停止并删除 ppp.service 并重载系统服务）"
+    echo "6) 查看运行状况（查看ppp.log和系统服务状态）"
+    echo "7) 卸载 ppp（删除/opt/ppp、停止并删除系统服务并重载）"
     echo "8) 退出"
     read -p "请输入选项 (1/2/3/4/5/6/7/8)： " OPERATION
 
@@ -156,8 +156,8 @@ while true; do
 
             cp appsettings.json appsettings.json.bak && echo "✅ 已备份配置文件"
 
-            # 使用 jq 更新配置，并确保格式正确
-            jq --indent 2 --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
+            # 使用 jq 更新配置，保留原始结构，强制 4 空格缩进
+            jq --indent 4 --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
                --arg pkey "$PROTOCOL_KEY" --arg tkey "$TRANSPORT_KEY" '
               .tcp.listen.port = ($port | tonumber) |
               .udp.listen.port = ($port | tonumber) |
@@ -166,7 +166,7 @@ while true; do
               .client.guid = $guid |
               .key."protocol-key" = $pkey |
               .key."transport-key" = $tkey
-            ' appsettings.json > temp.json || { echo "错误：jq 处理失败，无法更新 appsettings.json"; continue; }
+            ' appsettings.json > temp.json || { echo "错误：jq 处理失败，无法更新 appsettings.json"; rm -f temp.json; continue; }
 
             # 验证生成的 JSON 文件格式
             if ! jq empty temp.json >/dev/null 2>&1; then
@@ -186,7 +186,7 @@ while true; do
             chmod +x /opt/ppp/ppp && \
             systemctl daemon-reload && \
             systemctl enable ppp.service && \
-            systemctl start ppp.service && \
+            systemctl restart ppp.service && \
             if systemctl is-active --quiet ppp.service; then
                 echo "✅ ppp.service 正在运行（状态：active）"
             else
