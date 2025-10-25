@@ -51,16 +51,16 @@ echo "✅ 脚本启动，进入主循环"
 # 主循环
 while true; do
     # 调试：确认菜单打印
-    echo "✅ 开始打印菜单"
+    echo "openppp2一键脚本"
     echo "请选择操作："
-    echo "1) 安装（完整安装openppp2和配置）"
-    echo "2) 改完配置后的系统服务写入（跳过拉取和修改，直接配置服务）"
-    echo "3) 更新（更新openppp2二进制文件并配置服务）"
-    echo "4) 重启（重启ppp.service）"
-    echo "5) 停止（停止ppp.service）"
-    echo "6) 查看运行状况（查看ppp.log和系统服务状态）"
-    echo "7) 卸载 ppp（删除/opt/ppp、停止并删除系统服务并重载）"
-    echo "8) 退出"
+    echo "1) 服务端安装[完整安装ppp及配置，系统服务]"
+    echo "2) 服务端改完配置后的系统服务写入（跳过配置，跳到系统服务）"
+    echo "3) 更新[更新openppp2二进制文件并重新配置服务]"
+    echo "4) 重启[重启ppp服务]"
+    echo "5) 停止[停止ppp服务]"
+    echo "6) 查看运行状况[查看ppp.log和系统服务状态]"
+    echo "7) 卸载ppp[删除文件-删除重载系统服务]"
+    echo "8) 退出脚本"
     read -p "请输入选项[1-8]： " OPERATION
 
     case $OPERATION in
