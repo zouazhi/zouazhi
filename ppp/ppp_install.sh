@@ -156,8 +156,8 @@ while true; do
 
             cp appsettings.json appsettings.json.bak && echo "✅ 已备份配置文件"
 
-            # 使用 jq 更新配置，保留原始结构，强制 4 空格缩进
-            jq --indent 4 --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
+            # 使用 jq 更新配置，并确保格式正确
+            jq --indent 2 --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
                --arg pkey "$PROTOCOL_KEY" --arg tkey "$TRANSPORT_KEY" '
               .tcp.listen.port = ($port | tonumber) |
               .udp.listen.port = ($port | tonumber) |
@@ -166,7 +166,7 @@ while true; do
               .client.guid = $guid |
               .key."protocol-key" = $pkey |
               .key."transport-key" = $tkey
-            ' appsettings.json > temp.json || { echo "错误：jq 处理失败，无法更新 appsettings.json"; rm -f temp.json; continue; }
+            ' appsettings.json > temp.json || { echo "错误：jq 处理失败，无法更新 appsettings.json"; continue; }
 
             # 验证生成的 JSON 文件格式
             if ! jq empty temp.json >/dev/null 2>&1; then
