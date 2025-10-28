@@ -93,13 +93,13 @@ while true; do
             echo "✅ uuidgen 安装完成"
 
             mkdir -p /opt/ppp && cd /opt/ppp
-            prompt_replace_file "/opt/ppp/openppp2-linux-amd64.zip" \
+            prompt_replace_file "/opt/ppp/openppp2*.zip" \
                 "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
-                "openppp2-linux-amd64.zip" || continue
-            unzip -o openppp2-linux-amd64.zip ppp -d . && \
+                "openppp2*.zip" || continue
+            unzip -o openppp2*.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 安装完成" && \
-            rm -f openppp2-linux-amd64.zip
+            rm -f openppp2*.zip
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
 
@@ -219,13 +219,13 @@ while true; do
             ;;
         3)
             mkdir -p /opt/ppp && cd /opt/ppp
-            prompt_replace_file "/opt/ppp/openppp2-linux-amd64.zip" \
+            prompt_replace_file "/opt/ppp/openppp2*.zip" \
                 "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
-                "openppp2-linux-amd64.zip" || continue
-            unzip -o openppp2-linux-amd64.zip ppp -d . && \
+                "openppp2*.zip" || continue
+            unzip -o openppp2*.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 更新完成" && \
-            rm -f openppp2-linux-amd64.zip
+            rm -f openppp2*.zip
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
