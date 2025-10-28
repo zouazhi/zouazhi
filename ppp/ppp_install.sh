@@ -65,32 +65,41 @@ while true; do
 
     case $OPERATION in
         1)
-            echo "正在更新软件源并安装 jq 和 uuidgen..."
+            echo "正在更新软件源并安装 jq、uuidgen 和 unzip..."
             if command -v apt-get &> /dev/null; then
                 apt-get update
-                apt-get install -y jq uuid-runtime
+                apt-get install -y jq uuid-runtime unzip
             elif command -v dnf &> /dev/null; then
                 dnf update -y
-                dnf install -y jq util-linux
+                dnf install -y jq util-linux unzip
             elif command -v yum &> /dev/null; then
                 yum update -y
-                yum install -y jq util-linux
+                yum install -y jq util-linux unzip
             else
-                echo "错误：无法识别包管理器，请手动安装 jq 和 uuidgen"
+                echo "错误：无法识别包管理器，请手动安装 jq、uuidgen 和 unzip"
                 continue
             fi
 
+            # 检查 jq
             if ! command -v jq &> /dev/null; then
                 echo "错误：jq 安装失败"
                 continue
             fi
-            echo "✅ jq 安装完成，版本：$(jq --version)"
+            echo "jq 安装完成，版本：$(jq --version)"
 
+            # 检查 uuidgen
             if ! command -v uuidgen &> /dev/null; then
                 echo "错误：uuidgen 安装失败"
                 continue
             fi
-            echo "✅ uuidgen 安装完成"
+            echo "uuidgen 安装完成"
+
+            # 检查 unzip（新增）
+            if ! command -v unzip &> /dev/null; then
+                echo "错误：unzip 安装失败（无法解压 openppp2*.zip）"
+                continue
+            fi
+            echo "unzip 安装完成"
 
             mkdir -p /opt/ppp && cd /opt/ppp
             prompt_replace_file "/opt/ppp/openppp2*.zip" \
@@ -99,7 +108,7 @@ while true; do
             unzip -o openppp2*.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 安装完成" && \
-            rm -f openppp2*.zip
+            rm -f /opt/ppp/openppp2*.zip; echo "压缩包已删除"
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
 
@@ -225,7 +234,7 @@ while true; do
             unzip -o openppp2*.zip ppp -d . && \
             chmod +x ppp && \
             echo "✅ ppp 更新完成" && \
-            rm -f openppp2*.zip
+            rm -f /opt/ppp/openppp2*.zip; echo "压缩包已删除"
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
