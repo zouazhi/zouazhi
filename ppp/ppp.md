@@ -1,4 +1,4 @@
-1自动(半自动):一键脚本
+1自动(半自动):一键脚本，仅支持 x86
 <pre class="language-markup">wget -4 -O ppp_install.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh && chmod +x ppp_install.sh && ./ppp_install.sh <code></code></pre>
 
 
