@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（国内加速优化版 v2.1）
-# 使用 https://git.apad.pro/ 解决国内 GitHub 访问问题
+# openppp2 一键安装脚本（v2.2 智能加速版）
+# 支持用户自行选择是否使用国内加速代理
 # =============================================================================
 
 set -o pipefail
@@ -17,8 +17,23 @@ print() {
     echo -e "${2:-$GREEN}$1${RESET}"
 }
 
-# ==================== GitHub 加速代理 ====================
-GITHUB_PROXY="https://git.apad.pro/"
+# ==================== 用户选择加速代理 ====================
+print "=============== openppp2 一键脚本 ===============" $BLUE
+print "检测到您可能处于国内网络环境" $YELLOW
+echo
+print "是否使用国内 GitHub 加速代理？（git.apad.pro）" $BLUE
+echo "1) 是（推荐国内服务器使用，速度更快）"
+echo "2) 否（直连 GitHub，国外服务器或网络良好的情况）"
+read -p "请输入 [1/2]（默认 1）: " USE_PROXY
+
+if [ "$USE_PROXY" = "2" ]; then
+    GITHUB_PROXY=""
+    print "✅ 已选择直连 GitHub" $GREEN
+else
+    GITHUB_PROXY="https://git.apad.pro/"
+    print "✅ 已启用国内加速代理" $GREEN
+fi
+echo
 
 # ==================== 函数 ====================
 check_and_fix_permissions() {
@@ -42,7 +57,7 @@ prompt_replace_file() {
     mkdir -p "$target_dir"
 
     if [ -f "$target_path" ]; then
-        print "⚠️  $desc 已存在 → $target_path" $YELLOW
+        print "⚠️  $desc 已存在" $YELLOW
         read -p "是否替换？(y/n，默认 n): " REPLACE
         if [[ ! "$REPLACE" =~ ^[Yy]$ ]]; then
             print "✅ 保留现有文件" $GREEN
@@ -50,13 +65,13 @@ prompt_replace_file() {
         fi
     fi
 
-    print "📥 正在下载 $desc （通过国内加速）..." $BLUE
+    print "📥 正在下载 $desc ..." $BLUE
     if wget -4 --no-check-certificate -q --show-progress -O "$target_path" "$url"; then
         print "✅ $desc 下载完成" $GREEN
         return 0
     else
         print "❌ 下载失败！" $RED
-        print "🔍 错误详情：" $YELLOW
+        print "🔍 错误信息：" $YELLOW
         wget -4 --no-check-certificate -O "$target_path" "$url" 2>&1 | tail -n 10
         return 1
     fi
@@ -65,7 +80,7 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（国内加速版）===============" $BLUE
+    print "=============== openppp2 一键脚本（${GITHUB_PROXY:+加速版}${GITHUB_PROXY:-直连版}）===============" $BLUE
     echo "1) 服务端 - 完整自动安装（推荐）"
     echo "2) 服务端 - 仅配置系统服务"
     echo "3) 通用 - 更新二进制文件"
@@ -86,29 +101,25 @@ while true; do
             elif command -v yum >/dev/null; then
                 yum install -y jq util-linux unzip
             else
-                print "❌ 请手动安装 jq uuid-runtime unzip" $RED
+                print "❌ 请手动安装 jq、uuid-runtime、unzip" $RED
                 continue
             fi
 
             mkdir -p /opt/ppp && cd /opt/ppp
 
-            # 下载 openppp2 二进制（加速）
             prompt_replace_file "/opt/ppp/openppp2.zip" \
                 "${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
                 "openppp2.zip" || continue
 
             unzip -o openppp2.zip ppp -d . && chmod +x ppp && rm -f openppp2.zip
-            print "✅ openppp2 二进制安装完成" $GREEN
 
             check_and_fix_permissions "/opt/ppp/ppp" "ppp 主程序"
 
-            # 下载启动脚本
             prompt_replace_file "/opt/ppp/ppp.sh" \
                 "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh" \
                 "ppp.sh" || continue
             chmod +x ppp.sh
 
-            # 配置部分
             read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF_CONFIG
             if [[ "$SELF_CONFIG" =~ ^[Yy]$ ]]; then
                 print "请手动修改 /opt/ppp/appsettings.json 后重新运行" $YELLOW
@@ -144,9 +155,6 @@ while true; do
                 .key."transport-key" = $tkey
             ' appsettings.json > temp.json && mv temp.json appsettings.json
 
-            print "✅ 配置更新完成" $GREEN
-
-            # 下载 systemd 服务文件（关键修复）
             prompt_replace_file "/etc/systemd/system/ppp.service" \
                 "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
                 "ppp.service" || continue
@@ -156,48 +164,59 @@ while true; do
             systemctl enable --now ppp.service
 
             if systemctl is-active --quiet ppp.service; then
-                print "🎉 openppp2 服务端安装成功并已启动！" $GREEN
+                print "🎉 安装并启动成功！" $GREEN
             else
-                print "⚠️ 服务启动失败，请用选项 6 查看日志" $YELLOW
+                print "⚠️ 服务启动失败，请使用选项 6 查看日志" $YELLOW
             fi
             ;;
 
-        2|3|4|5|6|7|8)
-            # 其他功能保持不变，下面补全关键部分
-            if [ "$OPERATION" = "2" ]; then
-                cd /opt/ppp || { print "❌ 未找到 /opt/ppp 目录" $RED; continue; }
-                prompt_replace_file "/etc/systemd/system/ppp.service" \
-                    "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
-                    "ppp.service" || continue
-                systemctl daemon-reload && systemctl enable --now ppp.service
-                print "✅ 服务已重新配置并启动" $GREEN
-            elif [ "$OPERATION" = "3" ]; then
-                cd /opt/ppp || { print "❌ /opt/ppp 目录不存在" $RED; continue; }
-                prompt_replace_file "/opt/ppp/openppp2.zip" \
-                    "${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
-                    "openppp2.zip" || continue
-                unzip -o openppp2.zip ppp -d . && chmod +x ppp && rm -f openppp2.zip
-                systemctl restart ppp.service && print "✅ 二进制更新并重启完成" $GREEN
-            elif [ "$OPERATION" = "4" ]; then
-                systemctl restart ppp.service && print "✅ 服务已重启" $GREEN
-            elif [ "$OPERATION" = "5" ]; then
-                systemctl stop ppp.service && print "✅ 服务已停止" $GREEN
-            elif [ "$OPERATION" = "6" ]; then
-                print "=== ppp 日志 ===" $BLUE
-                [ -f "/opt/ppp/ppp.log" ] && tail -n 50 /opt/ppp/ppp.log || print "日志文件不存在" $YELLOW
-                echo; systemctl status ppp.service --no-pager -l
-            elif [ "$OPERATION" = "7" ]; then
-                systemctl stop ppp.service 2>/dev/null
-                systemctl disable ppp.service 2>/dev/null
-                rm -f /etc/systemd/system/ppp.service
-                systemctl daemon-reload
-                rm -rf /opt/ppp
-                print "✅ openppp2 已完全卸载" $GREEN
-            elif [ "$OPERATION" = "8" ]; then
-                print "👋 退出脚本" $GREEN
-                exit 0
-            fi
+        2)
+            cd /opt/ppp 2>/dev/null || { print "❌ 未找到 /opt/ppp 目录" $RED; continue; }
+            prompt_replace_file "/etc/systemd/system/ppp.service" \
+                "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
+                "ppp.service" || continue
+            systemctl daemon-reload && systemctl enable --now ppp.service
+            print "✅ 服务配置完成" $GREEN
             ;;
+
+        3)
+            cd /opt/ppp 2>/dev/null || { print "❌ /opt/ppp 目录不存在" $RED; continue; }
+            prompt_replace_file "/opt/ppp/openppp2.zip" \
+                "${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
+                "openppp2.zip" || continue
+            unzip -o openppp2.zip ppp -d . && chmod +x ppp && rm -f openppp2.zip
+            systemctl restart ppp.service && print "✅ 更新完成并重启" $GREEN
+            ;;
+
+        4)
+            systemctl restart ppp.service && print "✅ 服务已重启" $GREEN
+            ;;
+
+        5)
+            systemctl stop ppp.service && print "✅ 服务已停止" $GREEN
+            ;;
+
+        6)
+            print "=== ppp.log 最后50行 ===" $BLUE
+            [ -f "/opt/ppp/ppp.log" ] && tail -n 50 /opt/ppp/ppp.log || print "日志文件不存在" $YELLOW
+            echo
+            systemctl status ppp.service --no-pager -l
+            ;;
+
+        7)
+            systemctl stop ppp.service 2>/dev/null
+            systemctl disable ppp.service 2>/dev/null
+            rm -f /etc/systemd/system/ppp.service
+            systemctl daemon-reload
+            rm -rf /opt/ppp
+            print "✅ openppp2 已完全卸载" $GREEN
+            ;;
+
+        8)
+            print "👋 退出脚本" $GREEN
+            exit 0
+            ;;
+
         *)
             print "❌ 无效选项" $RED
             ;;
