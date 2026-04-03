@@ -9,6 +9,8 @@ https://git.apad.pro/ 加速
 拉取二进制文件
 <pre class="language-markup">mkdir /opt/ppp && cd /opt/ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip -o $(ls | grep -m1 'openppp2.*\.zip') ppp -d . && chmod +x ppp && echo "✅ ppp 安装/更新完成" && rm -f $(ls | grep -m1 'openppp2.*\.zip') <code></code></pre>
 
+更新
+<pre class="language-markup">cd /opt/ppp && wget -O openppp2.zip https://git.apad.pro/https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip -o openppp2.zip ppp && chmod +x ppp && rm -f openppp2.zip && systemctl restart ppp.service && echo "✅ 更新完成并重启" <code></code></pre>
 拉取启动脚本
  
 <pre class="language-markup">wget https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh && chmod +x ppp.sh <code></code></pre>
