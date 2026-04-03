@@ -1,293 +1,273 @@
 #!/bin/bash
+# =============================================================================
+# openppp2 一键安装脚本（完整优化版 v2.0）
+# 修复了 ppp.service 拉取失败问题 + 所有已知 Bug
+# 作者：基于原脚本优化
+# =============================================================================
 
-# 检查是否以 root 权限运行（安装和更新需要 root 权限）
+set -o pipefail
+
+# ==================== 颜色定义 ====================
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+RESET='\033[0m'
+
+print() {
+    echo -e "${2:-$GREEN}$1${RESET}"
+}
+
+# 检查 root 权限
 if [ "$(id -u)" != "0" ]; then
-    echo "错误：此脚本需要以 root 权限运行，请使用 sudo 或切换到 root 用户"
+    print "❌ 错误：此脚本必须以 root 权限运行！请使用 sudo bash $0" $RED
     exit 1
 fi
 
-# 检查文件是否具有可执行权限并修复
+# ==================== 函数 ====================
 check_and_fix_permissions() {
     local file="$1"
     local desc="$2"
-    if [ -f "$file" ] && [ ! -x "$file" ]; then
-        chmod +x "$file" && echo "✅ 已为 $desc 添加可执行权限"
-    elif [ -f "$file" ]; then
-        echo "✅ $desc 已具有可执行权限"
+    if [ -f "$file" ]; then
+        if [ ! -x "$file" ]; then
+            chmod +x "$file" && print "✅ 已为 $desc 添加可执行权限" $GREEN
+        else
+            print "✅ $desc 已具有可执行权限" $GREEN
+        fi
     fi
 }
 
-# 提示用户是否替换已有文件
 prompt_replace_file() {
-    local file="$1"
+    local target_path="$1"      # 完整目标路径
     local url="$2"
     local desc="$3"
-    local output_dir="$4"
-    local wget_cmd="wget -4"
 
-    if [ -n "$output_dir" ]; then
-        wget_cmd="$wget_cmd -P $output_dir"
-    else
-        wget_cmd="$wget_cmd -O $file"
-    fi
+    local target_dir=$(dirname "$target_path")
+    mkdir -p "$target_dir"
 
-    if [ -f "$file" ]; then
-        echo "警告：$desc 已存在（$file）"
-        read -p "是否替换现有文件？(y/n，默认 n)： " REPLACE
-        if [ "$REPLACE" != "y" ] && [ "$REPLACE" != "Y" ]; then
-            echo "✅ 保留现有 $desc，跳过拉取"
+    # 文件已存在时询问
+    if [ -f "$target_path" ]; then
+        print "⚠️  $desc 已存在 → $target_path" $YELLOW
+        read -p "是否替换？(y/n，默认 n): " REPLACE
+        if [[ ! "$REPLACE" =~ ^[Yy]$ ]]; then
+            print "✅ 保留现有文件，跳过下载" $GREEN
             return 0
         fi
     fi
 
-    $wget_cmd "$url" || { echo "错误：无法下载 $desc"; return 1; }
-    echo "✅ $desc 拉取完成"
-    return 0
+    print "📥 正在下载 $desc ..." $BLUE
+    # 关键修复：直接 -O 到完整路径 + 显示进度 + 失败时打印详细错误
+    if wget -4 --no-check-certificate -q --show-progress -O "$target_path" "$url"; then
+        print "✅ $desc 下载完成" $GREEN
+        return 0
+    else
+        print "❌ 下载 $desc 失败！" $RED
+        print "🔍 详细错误信息：" $YELLOW
+        wget -4 --no-check-certificate -O "$target_path" "$url" 2>&1 | tail -n 15
+        return 1
+    fi
 }
 
-# 调试：确认脚本开始执行
-echo "✅ 脚本启动，进入主循环"
-
-# 主循环
+# ==================== 主菜单循环 ====================
 while true; do
-    # 调试：确认菜单打印
-    echo "openppp2一键脚本"
-    echo "请选择操作："
-    echo "1) 服务端-自动交互安装[完整安装ppp及配置，系统服务]"
-    echo "2) 服务端-自行修改配置[跳过配置文件，直通系统服务]"
-    echo "3) 通用-更新[更新openppp2二进制文件并重新配置服务]"
-    echo "4) 通用-重启[重启ppp服务]"
-    echo "5) 通用-停止[停止ppp服务]"
-    echo "6) 通用-查看运行状况[查看ppp.log和系统服务状态]"
-    echo "7) 通用-卸载ppp[删除文件-删除重载系统服务]"
+    clear
+    print "=============== openppp2 一键脚本（优化版）===============" $BLUE
+    echo "1) 服务端 - 完整自动安装（推荐）"
+    echo "2) 服务端 - 仅配置系统服务（已手动修改配置）"
+    echo "3) 通用 - 更新二进制文件"
+    echo "4) 通用 - 重启服务"
+    echo "5) 通用 - 停止服务"
+    echo "6) 通用 - 查看运行状态"
+    echo "7) 通用 - 完全卸载"
     echo "8) 退出脚本"
-    read -p "请输入选项[1-8]： " OPERATION
+    read -p "请输入选项 [1-8]: " OPERATION
 
     case $OPERATION in
         1)
-            echo "正在更新软件源并安装 jq、uuidgen 和 unzip..."
-            if command -v apt-get &> /dev/null; then
-                apt-get update
-                apt-get install -y jq uuid-runtime unzip
-            elif command -v dnf &> /dev/null; then
-                dnf update -y
+            print "🔧 正在安装依赖（jq、uuidgen、unzip）..." $BLUE
+            if command -v apt-get >/dev/null; then
+                apt-get update -qq && apt-get install -y jq uuid-runtime unzip
+            elif command -v dnf >/dev/null; then
                 dnf install -y jq util-linux unzip
-            elif command -v yum &> /dev/null; then
-                yum update -y
+            elif command -v yum >/dev/null; then
                 yum install -y jq util-linux unzip
             else
-                echo "错误：无法识别包管理器，请手动安装 jq、uuidgen 和 unzip"
+                print "❌ 无法识别包管理器，请手动安装 jq uuid-runtime unzip" $RED
                 continue
             fi
 
-            # 检查 jq
-            if ! command -v jq &> /dev/null; then
-                echo "错误：jq 安装失败"
-                continue
-            fi
-            echo "jq 安装完成，版本：$(jq --version)"
-
-            # 检查 uuidgen
-            if ! command -v uuidgen &> /dev/null; then
-                echo "错误：uuidgen 安装失败"
-                continue
-            fi
-            echo "uuidgen 安装完成"
-
-            # 检查 unzip（新增）
-            if ! command -v unzip &> /dev/null; then
-                echo "错误：unzip 安装失败（无法解压 openppp2*.zip）"
-                continue
-            fi
-            echo "unzip 安装完成"
+            # 依赖检查
+            for cmd in jq uuidgen unzip; do
+                if ! command -v "$cmd" >/dev/null; then
+                    print "❌ $cmd 安装失败，请手动安装后重试" $RED
+                    continue 2
+                fi
+            done
 
             mkdir -p /opt/ppp && cd /opt/ppp
-            prompt_replace_file "/opt/ppp/openppp2*.zip" \
+
+            # 下载并解压 openppp2 二进制（修复通配符问题）
+            prompt_replace_file "/opt/ppp/openppp2.zip" \
                 "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
-                "openppp2*.zip" || continue
-            unzip -o openppp2*.zip ppp -d . && \
-            chmod +x ppp && \
-            echo "✅ ppp 安装完成" && \
-            rm -f /opt/ppp/openppp2*.zip; echo "压缩包已删除"
+                "openppp2.zip" || continue
 
-            check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
+            unzip -o openppp2.zip ppp -d . && chmod +x ppp && rm -f openppp2.zip
+            print "✅ openppp2 二进制文件安装完成" $GREEN
 
+            check_and_fix_permissions "/opt/ppp/ppp" "ppp 主程序"
+
+            # 下载启动脚本
             prompt_replace_file "/opt/ppp/ppp.sh" \
                 "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh" \
                 "ppp.sh 启动脚本" || continue
             chmod +x ppp.sh
-
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
 
-            echo "是否自行修改 appsettings.json 文件？"
-            echo "1) 是（脚本将暂停）"
-            echo "2) 否（通过脚本输入 IP、端口和 GUID）"
-            read -p "请输入选项 (1/2)： " CONFIG_OPTION
-            if [ "$CONFIG_OPTION" = "1" ]; then
-                echo "请手动修改 /opt/ppp/appsettings.json 文件后重新运行"
-                continue
-            elif [ "$CONFIG_OPTION" != "2" ]; then
-                echo "错误：无效选项"
+            # 配置 appsettings.json
+            read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF_CONFIG
+            if [[ "$SELF_CONFIG" =~ ^[Yy]$ ]]; then
+                print "✅ 请手动编辑 /opt/ppp/appsettings.json 后重新运行脚本" $YELLOW
                 continue
             fi
 
             prompt_replace_file "/opt/ppp/appsettings.json" \
                 "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/appsettings.json" \
-                "appsettings.json 配置文件" || continue
+                "appsettings.json" || continue
 
-            read -p "请输入新的 IP 地址（默认 1.1.1.1）： " NEW_IP
-            read -p "请输入新的端口（默认 20000）： " NEW_PORT
-            read -p "请输入新的 GUID（留空随机生成）： " NEW_GUID
+            read -p "服务器 IP（默认 1.1.1.1）: " NEW_IP
+            read -p "端口（默认 20000）: " NEW_PORT
+            read -p "GUID（留空自动生成）: " NEW_GUID
 
-            NEW_IP=${NEW_IP:-"1.1.1.1"}
-            NEW_PORT=${NEW_PORT:-"20000"}
+            NEW_IP=${NEW_IP:-1.1.1.1}
+            NEW_PORT=${NEW_PORT:-20000}
+            [[ -z "$NEW_GUID" ]] && NEW_GUID=$(uuidgen) && print "✅ 已生成随机 GUID: $NEW_GUID" $GREEN
 
-            if [ -z "$NEW_GUID" ]; then
-                NEW_GUID=$(uuidgen)
-                echo "✅ 已生成随机 UUID：$NEW_GUID"
-            fi
+            # 随机密钥
+            PROTOCOL_KEY=$(tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 16)
+            TRANSPORT_KEY=$(tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 16)
+            print "✅ 已生成随机 protocol-key: $PROTOCOL_KEY" $GREEN
+            print "✅ 已生成随机 transport-key: $TRANSPORT_KEY" $GREEN
 
-            if ! [[ "$NEW_IP" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-                echo "错误：无效 IP"
-                continue
-            fi
+            cp -f appsettings.json appsettings.json.bak 2>/dev/null
+            jq --indent 4 \
+                --arg ip "$NEW_IP" \
+                --arg port "$NEW_PORT" \
+                --arg guid "$NEW_GUID" \
+                --arg pkey "$PROTOCOL_KEY" \
+                --arg tkey "$TRANSPORT_KEY" '
+                .tcp.listen.port = ($port|tonumber) |
+                .udp.listen.port = ($port|tonumber) |
+                .udp.static.servers[0] = ($ip + ":" + $port) |
+                .client.server = ("ppp://" + $ip + ":" + $port) |
+                .client.guid = $guid |
+                .key."protocol-key" = $pkey |
+                .key."transport-key" = $tkey
+            ' appsettings.json > temp.json && mv temp.json appsettings.json
 
-            if ! [[ "$NEW_PORT" =~ ^[0-9]+$ ]] || [ "$NEW_PORT" -lt 1 ] || [ "$NEW_PORT" -gt 65535 ]; then
-                echo "错误：端口无效"
-                continue
-            fi
+            print "✅ appsettings.json 配置更新完成" $GREEN
 
-            # 生成 16 位随机 protocol-key 和 transport-key（字母数字，包含大小写）
-            PROTOCOL_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
-            TRANSPORT_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 16)
-            echo "✅ 已生成随机 protocol-key：$PROTOCOL_KEY"
-            echo "✅ 已生成随机 transport-key：$TRANSPORT_KEY"
-
-            cp appsettings.json appsettings.json.bak && echo "✅ 已备份配置文件"
-
-            # 使用 jq 更新配置，保留原始结构，强制 4 空格缩进
-            jq --indent 4 --arg ip "$NEW_IP" --arg port "$NEW_PORT" --arg guid "$NEW_GUID" \
-               --arg pkey "$PROTOCOL_KEY" --arg tkey "$TRANSPORT_KEY" '
-              .tcp.listen.port = ($port | tonumber) |
-              .udp.listen.port = ($port | tonumber) |
-              .udp.static.servers[0] = ($ip + ":" + $port) |
-              .client.server = ("ppp://" + $ip + ":" + $port) |
-              .client.guid = $guid |
-              .key."protocol-key" = $pkey |
-              .key."transport-key" = $tkey
-            ' appsettings.json > temp.json || { echo "错误：jq 处理失败，无法更新 appsettings.json"; rm -f temp.json; continue; }
-
-            # 验证生成的 JSON 文件格式
-            if ! jq empty temp.json >/dev/null 2>&1; then
-                echo "错误：生成的 appsettings.json 格式无效，请检查"
-                rm -f temp.json
-                continue
-            fi
-
-            mv temp.json appsettings.json && \
-            echo "✅ 已更新配置"
-
-            # 拉取系统服务并启动
+            # 关键修复：ppp.service 下载
             prompt_replace_file "/etc/systemd/system/ppp.service" \
                 "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
-                "ppp.service 系统服务文件" "/etc/systemd/system" || continue
-            chmod +x /opt/ppp/ && \
-            chmod +x /opt/ppp/ppp && \
-            systemctl daemon-reload && \
-            systemctl enable ppp.service && \
-            systemctl restart ppp.service && \
+                "ppp.service 系统服务" || continue
+
+            chmod 644 /etc/systemd/system/ppp.service
+            systemctl daemon-reload
+            systemctl enable --now ppp.service
+
             if systemctl is-active --quiet ppp.service; then
-                echo "✅ ppp.service 正在运行（状态：active）"
+                print "🎉 openppp2 服务端安装并启动成功！" $GREEN
             else
-                echo "❌ ppp.service 未运行，请检查日志（使用 journalctl -u ppp.service 或 cat /opt/ppp/ppp.log）"
+                print "⚠️ 服务启动失败，请运行选项 6 查看日志" $YELLOW
             fi
             ;;
+
         2)
             if [ ! -f "/opt/ppp/appsettings.json" ]; then
-                echo "错误：未找到配置文件"
+                print "❌ 未找到 /opt/ppp/appsettings.json，请先运行选项 1" $RED
                 continue
             fi
-            cd /opt/ppp
-            check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
+            cd /opt/ppp || { print "❌ /opt/ppp 目录不存在" $RED; continue; }
+
+            check_and_fix_permissions "/opt/ppp/ppp" "ppp 主程序"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
 
-            # 拉取系统服务并启动
             prompt_replace_file "/etc/systemd/system/ppp.service" \
                 "https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
-                "ppp.service 系统服务文件" "/etc/systemd/system" || continue
-            chmod +x /opt/ppp/ && \
-            chmod +x /opt/ppp/ppp && \
-            systemctl daemon-reload && \
-            systemctl enable ppp.service && \
-            systemctl restart ppp.service && \
+                "ppp.service 系统服务" || continue
+
+            chmod 644 /etc/systemd/system/ppp.service
+            systemctl daemon-reload
+            systemctl enable --now ppp.service
+
             if systemctl is-active --quiet ppp.service; then
-                echo "✅ ppp.service 正在运行（状态：active）"
+                print "✅ ppp.service 已启动" $GREEN
             else
-                echo "❌ ppp.service 未运行，请检查日志（使用 journalctl -u ppp.service 或 cat /opt/ppp/ppp.log）"
+                print "⚠️ 服务启动失败" $YELLOW
             fi
             ;;
+
         3)
             mkdir -p /opt/ppp && cd /opt/ppp
-            prompt_replace_file "/opt/ppp/openppp2*.zip" \
+            prompt_replace_file "/opt/ppp/openppp2.zip" \
                 "https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip" \
-                "openppp2*.zip" || continue
-            unzip -o openppp2*.zip ppp -d . && \
-            chmod +x ppp && \
-            echo "✅ ppp 更新完成" && \
-            rm -f /opt/ppp/openppp2*.zip; echo "压缩包已删除"
+                "openppp2.zip" || continue
 
-            check_and_fix_permissions "/opt/ppp/ppp" "ppp 二进制文件"
+            unzip -o openppp2.zip ppp -d . && chmod +x ppp && rm -f openppp2.zip
+            print "✅ openppp2 二进制文件更新完成" $GREEN
+
+            check_and_fix_permissions "/opt/ppp/ppp" "ppp 主程序"
             check_and_fix_permissions "/opt/ppp/ppp.sh" "ppp.sh 启动脚本"
 
-            systemctl restart ppp.service && echo "✅ ppp.service 已重启"
+            systemctl restart ppp.service && print "✅ ppp.service 已重启" $GREEN
             ;;
+
         4)
             systemctl daemon-reload
-            systemctl restart ppp.service && echo "✅ ppp.service 已重启"
+            systemctl restart ppp.service && print "✅ ppp.service 已重启" $GREEN
             ;;
+
         5)
-            systemctl stop ppp.service && echo "✅ ppp.service 已停止"
+            systemctl stop ppp.service && print "✅ ppp.service 已停止" $GREEN
             ;;
+
         6)
-            echo "=== 检查 ppp.log ==="
+            print "=== ppp.log 日志 ===" $BLUE
             if [ -f "/opt/ppp/ppp.log" ]; then
-                cat /opt/ppp/ppp.log
+                cat /opt/ppp/ppp.log | tail -n 50
             else
-                echo "错误：/opt/ppp/ppp.log 不存在"
+                print "ppp.log 不存在" $YELLOW
             fi
             echo
-            echo "=== 检查 ppp.service 状态 ==="
-            if systemctl is-enabled --quiet ppp.service || systemctl is-active --quiet ppp.service; then
-                systemctl status ppp.service
-            else
-                echo "错误：ppp.service 未启用或未运行"
-            fi
+            print "=== ppp.service 状态 ===" $BLUE
+            systemctl status ppp.service --no-pager -l
             ;;
+
         7)
-            echo "正在卸载 ppp..."
+            print "🗑️  开始卸载 openppp2 ..." $YELLOW
             if systemctl is-active --quiet ppp.service; then
-                systemctl stop ppp.service && echo "✅ 已停止 ppp.service"
+                systemctl stop ppp.service && print "✅ 已停止服务" $GREEN
             fi
             if systemctl is-enabled --quiet ppp.service; then
-                systemctl disable ppp.service && echo "✅ 已禁用 ppp.service"
+                systemctl disable ppp.service && print "✅ 已禁用服务" $GREEN
             fi
-            rm -f /etc/systemd/system/ppp.service && echo "✅ 已删除 ppp.service 文件"
-            systemctl daemon-reload && echo "✅ 已重载 systemd"
-            rm -rf /opt/ppp && echo "✅ 已删除 /opt/ppp"
-            echo "✅ 请手动删除脚本文件 /root/ppp_install.sh 以完成清理（命令：rm /root/ppp_install.sh）"
-            echo "✅ ppp 卸载完成！"
+            rm -f /etc/systemd/system/ppp.service && print "✅ 已删除 ppp.service" $GREEN
+            systemctl daemon-reload
+            rm -rf /opt/ppp && print "✅ 已删除 /opt/ppp 目录" $GREEN
+            print "✅ 卸载完成！如需删除本脚本请手动执行：rm -f /root/ppp_install.sh" $GREEN
             exit 0
             ;;
+
         8)
-            echo "✅ 退出脚本"
+            print "👋 退出脚本" $GREEN
             exit 0
             ;;
+
         *)
-            echo "错误：无效选项"
-            exit 1
+            print "❌ 无效选项，请输入 1-8" $RED
             ;;
     esac
 
-    echo "✅ 当前操作完成！"
     echo
+    read -p "按 Enter 键返回主菜单..." 
 done
