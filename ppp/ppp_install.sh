@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v3.1）
-# 默认加速 + ppp快捷命令 + 卸载时询问是否保留配置
+# openppp2 一键安装脚本（v3.2）
+# 优化选项布局 + 独立快捷命令选项
 # =============================================================================
 
 set -o pipefail
@@ -28,6 +28,8 @@ fi
 EOF
         chmod +x /usr/local/bin/ppp
         print "✅ 已创建 ppp 快捷命令！以后直接输入 ppp 即可运行脚本" $GREEN
+    else
+        print "✅ ppp 快捷命令已存在" $GREEN
     fi
 }
 
@@ -76,19 +78,20 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v3.1）===============" $BLUE
-    echo "1) 服务端 - 完整自动安装（推荐）"
-    echo "2) 服务端 - 配置系统服务（自行修改配置使用这个）"
-    echo "3) 通用 - 更新二进制文件"
-    echo "4) 通用 - 重启服务"
-    echo "5) 通用 - 停止服务"
-    echo "6) 通用 - 查看运行状态（日志最后50行）"
-    echo "7) 通用 - 完全卸载"
-    echo "8) 退出"
-    read -p "请输入选项 [1-8]: " OPERATION
+    print "=============== openppp2 一键脚本（v3.2）===============" $BLUE
+    echo "1) 服务端 - 完整自动安装（推荐，自动创建ppp命令）"
+    echo "2) 服务端 - 配置系统服务（自行修改配置后使用）"
+    echo "3) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
+    echo "4) 通用 - 更新二进制文件"
+    echo "5) 通用 - 重启服务"
+    echo "6) 通用 - 停止服务"
+    echo "7) 通用 - 查看运行状态（日志最后50行）"
+    echo "8) 通用 - 完全卸载"
+    echo "9) 退出"
+    read -p "请输入选项 [1-9]: " OPERATION
 
     case $OPERATION in
-        1|2|3)
+        1|4)
             print "🌍 是否使用国内加速代理 (git.apad.pro)？" $BLUE
             read -p "输入 y 使用加速，n 直连 (默认 y): " USE_PROXY
             if [[ "$USE_PROXY" =~ ^[Nn]$ ]]; then
@@ -99,14 +102,14 @@ while true; do
                 print "✅ 已启用国内加速代理 (默认)" $GREEN
             fi
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
+            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "4" ]; then
                 ARCH=$(detect_architecture)
                 print "🔍 检测到系统架构: $ARCH" $BLUE
             fi
 
             mkdir -p /opt/ppp && cd /opt/ppp
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
+            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "4" ]; then
                 ZIP_NAME="openppp2-linux-${ARCH}.zip"
                 URL="${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/${ZIP_NAME}"
                 prompt_replace_file "/opt/ppp/${ZIP_NAME}" "$URL" "openppp2-${ARCH}.zip" || continue
@@ -116,8 +119,8 @@ while true; do
             fi
 
             if [ "$OPERATION" = "1" ]; then
-                print "🔧 正在安装依赖（jq、uuid-runtime、unzip）..." $BLUE
-                
+                # 完整安装
+                print "🔧 正在安装依赖..." $BLUE
                 if command -v apt-get >/dev/null; then
                     apt-get update && apt-get install -y jq uuid-runtime unzip
                 elif command -v dnf >/dev/null; then
@@ -125,7 +128,7 @@ while true; do
                 elif command -v yum >/dev/null; then
                     yum install -y jq util-linux unzip
                 else
-                    print "❌ 无法识别包管理器，请手动安装 jq uuid-runtime unzip" $RED
+                    print "❌ 无法识别包管理器，请手动安装依赖" $RED
                     continue
                 fi
 
@@ -136,7 +139,8 @@ while true; do
 
                 read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF
                 if [[ "$SELF" =~ ^[Yy]$ ]]; then
-                    print "请手动修改 /opt/ppp/appsettings.json 后，重新运行脚本并选择选项 2" $YELLOW
+                    print "请手动修改 /opt/ppp/appsettings.json 后，运行选项 2 配置服务" $YELLOW
+                    create_ppp_shortcut
                     continue
                 fi
 
@@ -180,68 +184,61 @@ while true; do
                     print "⚠️ 服务启动失败，请检查日志" $YELLOW
                 fi
             fi
-
-            if [ "$OPERATION" = "2" ]; then
-                prompt_replace_file "/etc/systemd/system/ppp.service" "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" "ppp.service" || continue
-                systemctl daemon-reload && systemctl enable --now ppp.service
-                print "✅ 服务配置完成并启动" $GREEN
-                create_ppp_shortcut
-            fi
-
-            if [ "$OPERATION" = "3" ]; then
-                systemctl restart ppp.service && print "✅ 服务已重启" $GREEN
-            fi
             ;;
 
-        4) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
-        5) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
-        6)
-            print "=== ppp.log（最后 50 行）===" $BLUE
-            if [ -f "/opt/ppp/ppp.log" ]; then
-                tail -n 50 /opt/ppp/ppp.log
-            else
-                print "日志文件不存在" $YELLOW
+        2)
+            # 配置系统服务
+            if [ ! -f "/opt/ppp/appsettings.json" ]; then
+                print "❌ 未找到 appsettings.json，请先运行选项 1 或手动放置配置文件" $RED
+                continue
             fi
+            cd /opt/ppp || { print "❌ /opt/ppp 目录不存在" $RED; continue; }
+
+            prompt_replace_file "/etc/systemd/system/ppp.service" \
+                "${GITHUB_PROXY:-https://git.apad.pro/}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" \
+                "ppp.service" || continue
+
+            systemctl daemon-reload && systemctl enable --now ppp.service
+            print "✅ 系统服务配置完成并启动" $GREEN
+            ;;
+
+        3)
+            # 独立设置快捷命令
+            create_ppp_shortcut
+            ;;
+
+        5) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
+        6) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
+        7)
+            print "=== ppp.log（最后 50 行）===" $BLUE
+            [ -f "/opt/ppp/ppp.log" ] && tail -n 50 /opt/ppp/ppp.log || print "日志文件不存在" $YELLOW
             echo
             print "=== ppp.service 状态 ===" $BLUE
             systemctl status ppp.service --no-pager -l
             ;;
-        7)
-            print "🗑️  开始卸载 openppp2 ..." $YELLOW
-            
-            # 停止并禁用服务
+        8)
+            print "🗑️  开始卸载..." $YELLOW
             systemctl stop ppp.service 2>/dev/null
             systemctl disable ppp.service 2>/dev/null
             rm -f /etc/systemd/system/ppp.service
             systemctl daemon-reload
 
-            # 询问是否保留配置文件
-            print "是否保留配置文件？（appsettings.json 和 ppp.log）" $BLUE
+            print "是否保留配置文件？（appsettings.json 等）" $BLUE
             read -p "输入 y 保留（默认），n 删除: " KEEP_CONFIG
             if [[ "$KEEP_CONFIG" =~ ^[Nn]$ ]]; then
                 rm -rf /opt/ppp
-                print "✅ 已删除所有文件（包括配置文件）" $GREEN
+                print "✅ 已删除所有文件" $GREEN
             else
-                if [ -d "/opt/ppp" ]; then
-                    rm -f /opt/ppp/ppp
-                    rm -f /opt/ppp/ppp.sh
-                    rm -f /opt/ppp/openppp2-linux-*.zip 2>/dev/null
-                    print "✅ 已保留配置文件 /opt/ppp/appsettings.json" $GREEN
-                fi
+                rm -f /opt/ppp/ppp /opt/ppp/ppp.sh /opt/ppp/openppp2-linux-*.zip 2>/dev/null
+                print "✅ 已保留配置文件 /opt/ppp/appsettings.json" $GREEN
             fi
 
-            # 删除快捷命令
             rm -f /usr/local/bin/ppp
-
-            print "✅ 卸载完成！" $GREEN
-            print "快捷命令 ppp 已删除" $YELLOW
-            if [[ ! "$KEEP_CONFIG" =~ ^[Nn]$ ]]; then
-                print "配置文件保留在 /opt/ppp/ 目录" $GREEN
-            fi
+            print "✅ 卸载完成，快捷命令 ppp 已删除" $GREEN
             exit 0
             ;;
 
-        8)
+        9)
             print "👋 退出脚本" $GREEN
             exit 0
             ;;
