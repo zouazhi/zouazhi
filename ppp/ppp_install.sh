@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（默认加速 v2.8）
-# 默认使用 git.apad.pro 加速 + 依赖安装显示完整输出
+# openppp2 一键安装脚本（v2.9）
+# 默认加速 + 日志显示最后50行 + ppp快捷命令 + 彻底卸载
 # =============================================================================
 
 set -o pipefail
@@ -60,13 +60,13 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v2.8 默认加速）===============" $BLUE
+    print "=============== openppp2 一键脚本（v2.9）===============" $BLUE
     echo "1) 服务端 - 完整自动安装（推荐）"
     echo "2) 服务端 - 配置系统服务（自行修改配置使用这个）"
     echo "3) 通用 - 更新二进制文件"
     echo "4) 通用 - 重启服务"
     echo "5) 通用 - 停止服务"
-    echo "6) 通用 - 查看运行状态"
+    echo "6) 通用 - 查看运行状态（日志最后50行）"
     echo "7) 通用 - 完全卸载"
     echo "8) 退出"
     read -p "请输入选项 [1-8]: " OPERATION
@@ -100,7 +100,6 @@ while true; do
             fi
 
             if [ "$OPERATION" = "1" ]; then
-                # ==================== 完整安装 ====================
                 print "🔧 正在安装依赖（jq、uuid-runtime、unzip）..." $BLUE
                 
                 if command -v apt-get >/dev/null; then
@@ -116,13 +115,12 @@ while true; do
 
                 print "✅ 依赖安装完成" $GREEN
 
-                # 后续安装逻辑（ppp.sh、appsettings.json、service）
                 prompt_replace_file "/opt/ppp/ppp.sh" "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh" "ppp.sh" || continue
                 chmod +x ppp.sh
 
                 read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF
                 if [[ "$SELF" =~ ^[Yy]$ ]]; then
-                    print "请手动修改 /opt/ppp/appsettings.json 后重新运行" $YELLOW
+                    print "请手动修改 /opt/ppp/appsettings.json 后重新运行脚本并选择选项 2" $YELLOW
                     continue
                 fi
 
@@ -165,7 +163,7 @@ while true; do
             if [ "$OPERATION" = "2" ]; then
                 prompt_replace_file "/etc/systemd/system/ppp.service" "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" "ppp.service" || continue
                 systemctl daemon-reload && systemctl enable --now ppp.service
-                print "✅ 服务配置完成" $GREEN
+                print "✅ 服务配置完成并启动" $GREEN
             fi
 
             if [ "$OPERATION" = "3" ]; then
@@ -176,17 +174,26 @@ while true; do
         4) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
         5) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
         6)
-            print "=== ppp.log ===" $BLUE
-            [ -f "/opt/ppp/ppp.log" ] && tail -n 50 /opt/ppp/ppp.log || print "日志不存在" $YELLOW
-            echo; systemctl status ppp.service --no-pager -l
+            print "=== ppp.log（最后 50 行）===" $BLUE
+            if [ -f "/opt/ppp/ppp.log" ]; then
+                tail -n 50 /opt/ppp/ppp.log
+            else
+                print "日志文件不存在" $YELLOW
+            fi
+            echo
+            print "=== ppp.service 状态 ===" $BLUE
+            systemctl status ppp.service --no-pager -l
             ;;
         7)
+            print "🗑️  开始彻底卸载..." $YELLOW
             systemctl stop ppp.service 2>/dev/null
             systemctl disable ppp.service 2>/dev/null
             rm -f /etc/systemd/system/ppp.service
             systemctl daemon-reload
             rm -rf /opt/ppp
-            print "✅ 已完全卸载" $GREEN
+            rm -f /root/ppp_install.sh
+            print "✅ 已完全卸载（包括本脚本）" $GREEN
+            exit 0
             ;;
         8)
             print "👋 退出脚本" $GREEN
