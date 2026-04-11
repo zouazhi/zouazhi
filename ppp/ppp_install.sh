@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v3.2）
-# 优化选项布局 + 独立快捷命令选项
+# openppp2 一键安装脚本（v3.3）
+# 快捷命令移至选项8 + 优化下载提示
 # =============================================================================
 
 set -o pipefail
@@ -82,20 +82,20 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v3.2）===============" $BLUE
+    print "=============== openppp2 一键脚本（v3.3）===============" $BLUE
     echo "1) 服务端 - 完整自动安装（推荐，自动创建ppp命令）"
     echo "2) 服务端 - 配置系统服务（自行修改配置后使用）"
-    echo "3) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
-    echo "4) 通用 - 更新二进制文件"
-    echo "5) 通用 - 重启服务"
-    echo "6) 通用 - 停止服务"
-    echo "7) 通用 - 查看运行状态（日志最后50行）"
-    echo "8) 通用 - 完全卸载"
+    echo "3) 通用 - 更新二进制文件"
+    echo "4) 通用 - 重启服务"
+    echo "5) 通用 - 停止服务"
+    echo "6) 通用 - 查看运行状态（日志最后50行）"
+    echo "7) 通用 - 完全卸载"
+    echo "8) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
     echo "9) 退出"
     read -p "请输入选项 [1-9]: " OPERATION
 
     case $OPERATION in
-        1|4)
+        1|3)
             print "🌍 是否使用国内加速代理 (git.apad.pro)？" $BLUE
             read -p "输入 y 使用加速，n 直连 (默认 y): " USE_PROXY
             if [[ "$USE_PROXY" =~ ^[Nn]$ ]]; then
@@ -106,14 +106,14 @@ while true; do
                 print "✅ 已启用国内加速代理 (默认)" $GREEN
             fi
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "4" ]; then
+            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
                 ARCH=$(detect_architecture)
                 print "🔍 检测到系统架构: $ARCH" $BLUE
             fi
 
             mkdir -p /opt/ppp && cd /opt/ppp
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "4" ]; then
+            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
                 ZIP_NAME="openppp2-linux-${ARCH}.zip"
                 URL="${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/${ZIP_NAME}"
                 prompt_replace_file "/opt/ppp/${ZIP_NAME}" "$URL" "openppp2-${ARCH}.zip" || continue
@@ -123,8 +123,9 @@ while true; do
             fi
 
             if [ "$OPERATION" = "1" ]; then
-                # 完整安装
-                print "🔧 正在安装依赖..." $BLUE
+                # ==================== 完整安装 ====================
+                print "🔧 正在安装依赖（jq、uuid-runtime、unzip）..." $BLUE
+                
                 if command -v apt-get >/dev/null; then
                     apt-get update && apt-get install -y jq uuid-runtime unzip
                 elif command -v dnf >/dev/null; then
@@ -206,21 +207,20 @@ while true; do
             print "✅ 系统服务配置完成并启动" $GREEN
             ;;
 
-        3)
-            # 独立设置快捷命令
-            create_ppp_shortcut
-            ;;
-
-        5) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
-        6) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
-        7)
+        4) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
+        5) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
+        6)
             print "=== ppp.log（最后 50 行）===" $BLUE
-            [ -f "/opt/ppp/ppp.log" ] && tail -n 50 /opt/ppp/ppp.log || print "日志文件不存在" $YELLOW
+            if [ -f "/opt/ppp/ppp.log" ]; then
+                tail -n 50 /opt/ppp/ppp.log
+            else
+                print "日志文件不存在" $YELLOW
+            fi
             echo
             print "=== ppp.service 状态 ===" $BLUE
             systemctl status ppp.service --no-pager -l
             ;;
-        8)
+        7)
             print "🗑️  开始卸载..." $YELLOW
             systemctl stop ppp.service 2>/dev/null
             systemctl disable ppp.service 2>/dev/null
@@ -240,6 +240,11 @@ while true; do
             rm -f /usr/local/bin/ppp
             print "✅ 卸载完成，快捷命令 ppp 已删除" $GREEN
             exit 0
+            ;;
+
+        8)
+            # 设置 ppp 快捷命令
+            create_ppp_shortcut
             ;;
 
         9)
