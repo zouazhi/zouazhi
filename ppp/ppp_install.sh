@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v2.9）
-# 默认加速 + 日志显示最后50行 + ppp快捷命令 + 彻底卸载
+# openppp2 一键安装脚本（v3.1）
+# 默认加速 + ppp快捷命令 + 卸载时询问是否保留配置
 # =============================================================================
 
 set -o pipefail
@@ -14,6 +14,22 @@ BLUE='\033[34m'
 RESET='\033[0m'
 
 print() { echo -e "${2:-$GREEN}$1${RESET}"; }
+
+# ==================== 创建 ppp 快捷命令函数 ====================
+create_ppp_shortcut() {
+    if [ ! -f "/usr/local/bin/ppp" ]; then
+        cat > /usr/local/bin/ppp << 'EOF'
+#!/bin/bash
+if [ -f "/root/ppp_install.sh" ]; then
+    bash /root/ppp_install.sh
+else
+    echo "❌ 脚本文件不存在，请重新下载 ppp_install.sh"
+fi
+EOF
+        chmod +x /usr/local/bin/ppp
+        print "✅ 已创建 ppp 快捷命令！以后直接输入 ppp 即可运行脚本" $GREEN
+    fi
+}
 
 # ==================== 架构检测函数 ====================
 detect_architecture() {
@@ -60,7 +76,7 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v2.9）===============" $BLUE
+    print "=============== openppp2 一键脚本（v3.1）===============" $BLUE
     echo "1) 服务端 - 完整自动安装（推荐）"
     echo "2) 服务端 - 配置系统服务（自行修改配置使用这个）"
     echo "3) 通用 - 更新二进制文件"
@@ -120,7 +136,7 @@ while true; do
 
                 read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF
                 if [[ "$SELF" =~ ^[Yy]$ ]]; then
-                    print "请手动修改 /opt/ppp/appsettings.json 后重新运行脚本并选择选项 2" $YELLOW
+                    print "请手动修改 /opt/ppp/appsettings.json 后，重新运行脚本并选择选项 2" $YELLOW
                     continue
                 fi
 
@@ -157,13 +173,19 @@ while true; do
                 systemctl daemon-reload
                 systemctl enable --now ppp.service
 
-                systemctl is-active --quiet ppp.service && print "🎉 安装成功！服务已启动" $GREEN || print "⚠️ 服务启动失败，请检查日志" $YELLOW
+                if systemctl is-active --quiet ppp.service; then
+                    print "🎉 安装成功！服务已启动" $GREEN
+                    create_ppp_shortcut
+                else
+                    print "⚠️ 服务启动失败，请检查日志" $YELLOW
+                fi
             fi
 
             if [ "$OPERATION" = "2" ]; then
                 prompt_replace_file "/etc/systemd/system/ppp.service" "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.service" "ppp.service" || continue
                 systemctl daemon-reload && systemctl enable --now ppp.service
                 print "✅ 服务配置完成并启动" $GREEN
+                create_ppp_shortcut
             fi
 
             if [ "$OPERATION" = "3" ]; then
@@ -185,16 +207,40 @@ while true; do
             systemctl status ppp.service --no-pager -l
             ;;
         7)
-            print "🗑️  开始彻底卸载..." $YELLOW
+            print "🗑️  开始卸载 openppp2 ..." $YELLOW
+            
+            # 停止并禁用服务
             systemctl stop ppp.service 2>/dev/null
             systemctl disable ppp.service 2>/dev/null
             rm -f /etc/systemd/system/ppp.service
             systemctl daemon-reload
-            rm -rf /opt/ppp
-            rm -f /root/ppp_install.sh
-            print "✅ 已完全卸载（包括本脚本）" $GREEN
+
+            # 询问是否保留配置文件
+            print "是否保留配置文件？（appsettings.json 和 ppp.log）" $BLUE
+            read -p "输入 y 保留（默认），n 删除: " KEEP_CONFIG
+            if [[ "$KEEP_CONFIG" =~ ^[Nn]$ ]]; then
+                rm -rf /opt/ppp
+                print "✅ 已删除所有文件（包括配置文件）" $GREEN
+            else
+                if [ -d "/opt/ppp" ]; then
+                    rm -f /opt/ppp/ppp
+                    rm -f /opt/ppp/ppp.sh
+                    rm -f /opt/ppp/openppp2-linux-*.zip 2>/dev/null
+                    print "✅ 已保留配置文件 /opt/ppp/appsettings.json" $GREEN
+                fi
+            fi
+
+            # 删除快捷命令
+            rm -f /usr/local/bin/ppp
+
+            print "✅ 卸载完成！" $GREEN
+            print "快捷命令 ppp 已删除" $YELLOW
+            if [[ ! "$KEEP_CONFIG" =~ ^[Nn]$ ]]; then
+                print "配置文件保留在 /opt/ppp/ 目录" $GREEN
+            fi
             exit 0
             ;;
+
         8)
             print "👋 退出脚本" $GREEN
             exit 0
