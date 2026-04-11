@@ -1,7 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v3.3）
-# 快捷命令移至选项8 + 优化下载提示
+# openppp2 一键安装脚本（v3.3 - 日志显示前30行）
 # =============================================================================
 
 set -o pipefail
@@ -88,7 +87,7 @@ while true; do
     echo "3) 通用 - 更新二进制文件"
     echo "4) 通用 - 重启服务"
     echo "5) 通用 - 停止服务"
-    echo "6) 通用 - 查看运行状态"
+    echo "6) 通用 - 查看运行状态（日志前30行）"
     echo "7) 通用 - 完全卸载"
     echo "8) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
     echo "9) 退出"
@@ -123,7 +122,6 @@ while true; do
             fi
 
             if [ "$OPERATION" = "1" ]; then
-                # ==================== 完整安装 ====================
                 print "🔧 正在安装依赖（jq、uuid-runtime、unzip）..." $BLUE
                 
                 if command -v apt-get >/dev/null; then
@@ -192,7 +190,6 @@ while true; do
             ;;
 
         2)
-            # 配置系统服务
             if [ ! -f "/opt/ppp/appsettings.json" ]; then
                 print "❌ 未找到 appsettings.json，请先运行选项 1 或手动放置配置文件" $RED
                 continue
@@ -210,9 +207,9 @@ while true; do
         4) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
         5) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
         6)
-            print "=== ppp.log（最后 50 行）===" $BLUE
+            print "=== ppp.log（前 30 行）===" $BLUE
             if [ -f "/opt/ppp/ppp.log" ]; then
-                tail -n 50 /opt/ppp/ppp.log
+                head -n 30 /opt/ppp/ppp.log
             else
                 print "日志文件不存在" $YELLOW
             fi
@@ -243,7 +240,6 @@ while true; do
             ;;
 
         8)
-            # 设置 ppp 快捷命令
             create_ppp_shortcut
             ;;
 
