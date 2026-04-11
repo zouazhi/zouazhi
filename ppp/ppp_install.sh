@@ -23,7 +23,11 @@ create_ppp_shortcut() {
 if [ -f "/root/ppp_install.sh" ]; then
     bash /root/ppp_install.sh
 else
-    echo "❌ 脚本文件不存在，请重新下载 ppp_install.sh"
+    echo "❌ 脚本文件不存在，请重新下载"
+    echo "请执行以下命令下载最新脚本："
+    echo "wget -4 -O /root/ppp_install.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
+    echo "chmod +x /root/ppp_install.sh"
+    echo "然后输入 ppp 即可运行"
 fi
 EOF
         chmod +x /usr/local/bin/ppp
