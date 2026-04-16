@@ -88,7 +88,7 @@ while true; do
     echo "3) 通用 - 更新二进制文件"
     echo "4) 通用 - 重启服务"
     echo "5) 通用 - 停止服务"
-    echo "6) 通用 - 查看运行状态（日志前30行）"
+    echo "6) 通用 - 查看运行状态（日志前50行）"
     echo "7) 通用 - 完全卸载"
     echo "8) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
     echo "9) 更新本脚本（获取最新版本）"
@@ -209,9 +209,9 @@ while true; do
         4) systemctl restart ppp.service && print "✅ 服务已重启" $GREEN ;;
         5) systemctl stop ppp.service && print "✅ 服务已停止" $GREEN ;;
         6)
-            print "=== ppp.log（前 30 行）===" $BLUE
+            print "=== ppp.log（前 50 行）===" $BLUE
             if [ -f "/opt/ppp/ppp.log" ]; then
-                head -n 30 /opt/ppp/ppp.log
+                head -n 50 /opt/ppp/ppp.log
             else
                 print "日志文件不存在" $YELLOW
             fi
