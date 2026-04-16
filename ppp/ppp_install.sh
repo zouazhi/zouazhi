@@ -1,6 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v3.4 - 日志显示前30行）
+# openppp2 一键安装脚本（v3.4 完整版）
+# 新增选项9：更新本脚本
 # =============================================================================
 
 set -o pipefail
@@ -81,7 +82,7 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v3.4）===============" $BLUE
+    print "=============== openppp2 一键脚本（v3.4 完整版）===============" $BLUE
     echo "1) 服务端 - 完整自动安装（推荐，自动创建ppp命令）"
     echo "2) 服务端 - 配置系统服务（自行修改配置后使用）"
     echo "3) 通用 - 更新二进制文件"
@@ -90,8 +91,9 @@ while true; do
     echo "6) 通用 - 查看运行状态（日志前30行）"
     echo "7) 通用 - 完全卸载"
     echo "8) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
-    echo "9) 退出"
-    read -p "请输入选项 [1-9]: " OPERATION
+    echo "9) 更新本脚本（获取最新版本）"
+    echo "10) 退出"
+    read -p "请输入选项 [1-10]: " OPERATION
 
     case $OPERATION in
         1|3)
@@ -191,7 +193,7 @@ while true; do
 
         2)
             if [ ! -f "/opt/ppp/appsettings.json" ]; then
-                print "❌ 未找到 appsettings.json，请先运行选项 1 或手动放置配置文件" $RED
+                print "❌ 未找到 appsettings.json，请先运行选项 1" $RED
                 continue
             fi
             cd /opt/ppp || { print "❌ /opt/ppp 目录不存在" $RED; continue; }
@@ -224,18 +226,18 @@ while true; do
             rm -f /etc/systemd/system/ppp.service
             systemctl daemon-reload
 
-            print "是否保留配置文件？（appsettings.json 等）" $BLUE
+            print "是否保留配置文件？（默认保留）" $BLUE
             read -p "输入 y 保留（默认），n 删除: " KEEP_CONFIG
             if [[ "$KEEP_CONFIG" =~ ^[Nn]$ ]]; then
                 rm -rf /opt/ppp
                 print "✅ 已删除所有文件" $GREEN
             else
                 rm -f /opt/ppp/ppp /opt/ppp/ppp.sh /opt/ppp/openppp2-linux-*.zip 2>/dev/null
-                print "✅ 已保留配置文件 /opt/ppp/appsettings.json" $GREEN
+                print "✅ 已保留配置文件" $GREEN
             fi
 
             rm -f /usr/local/bin/ppp
-            print "✅ 卸载完成，快捷命令 ppp 已删除" $GREEN
+            print "✅ 卸载完成" $GREEN
             exit 0
             ;;
 
@@ -244,6 +246,29 @@ while true; do
             ;;
 
         9)
+            print "🌍 更新本脚本 - 请选择方式" $BLUE
+            echo "1) 使用国内加速 (推荐)"
+            echo "2) 直连 GitHub"
+            read -p "请输入 [1-2]（默认 1）: " UPDATE_MODE
+
+            if [ "$UPDATE_MODE" = "2" ]; then
+                UPDATE_URL="https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
+            else
+                UPDATE_URL="https://git.apad.pro/https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
+            fi
+
+            print "📥 正在下载最新脚本..." $BLUE
+            wget -4 -O /root/ppp_install.sh "$UPDATE_URL" && chmod +x /root/ppp_install.sh
+
+            if [ $? -eq 0 ]; then
+                print "✅ 脚本更新成功！正在重新启动..." $GREEN
+                exec /root/ppp_install.sh
+            else
+                print "❌ 更新失败" $RED
+            fi
+            ;;
+
+        10)
             print "👋 退出脚本" $GREEN
             exit 0
             ;;
