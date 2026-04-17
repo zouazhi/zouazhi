@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# openppp2 一键安装脚本（v3.4 完整版）
-# 新增选项9：更新本脚本
+# openppp2 一键安装脚本（v3.6 智能最优版）
+# 自动检测架构 + tc + io-uring + simd，选择最佳版本
 # =============================================================================
 
 set -o pipefail
@@ -15,7 +15,7 @@ RESET='\033[0m'
 
 print() { echo -e "${2:-$GREEN}$1${RESET}"; }
 
-# ==================== 创建 ppp 快捷命令函数 ====================
+# ==================== 创建 ppp 快捷命令 ====================
 create_ppp_shortcut() {
     if [ ! -f "/usr/local/bin/ppp" ]; then
         cat > /usr/local/bin/ppp << 'EOF'
@@ -24,30 +24,69 @@ if [ -f "/root/ppp_install.sh" ]; then
     bash /root/ppp_install.sh
 else
     echo "❌ 脚本文件不存在，请重新下载"
-    echo "请执行以下命令下载最新脚本："
     echo "wget -4 -O /root/ppp_install.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
     echo "chmod +x /root/ppp_install.sh"
-    echo "然后输入 ppp 即可运行"
 fi
 EOF
         chmod +x /usr/local/bin/ppp
-        print "✅ 已创建 ppp 快捷命令！以后直接输入 ppp 即可运行脚本" $GREEN
+        print "✅ 已创建 ppp 快捷命令！以后直接输入 ppp 即可运行" $GREEN
     else
         print "✅ ppp 快捷命令已存在" $GREEN
     fi
 }
 
-# ==================== 架构检测函数 ====================
-detect_architecture() {
+# ==================== 系统能力检测 ====================
+has_aesni() {
+    grep -q 'aes' /proc/cpuinfo 2>/dev/null
+}
+
+kernel_supports_io_uring() {
+    local major=$(uname -r | cut -d. -f1)
+    local minor=$(uname -r | cut -d. -f2)
+    [ "$major" -gt 5 ] || { [ "$major" -eq 5 ] && [ "$minor" -ge 1 ]; }
+}
+
+has_tc() {
+    command -v tc >/dev/null 2>&1
+}
+
+# ==================== 自动选择最优版本 ====================
+choose_best_zip() {
     local arch=$(uname -m)
     case "$arch" in
-        x86_64|amd64)      echo "amd64" ;;
-        aarch64|arm64)     echo "aarch64" ;;
-        armv7l|armv7)      echo "armv7l" ;;
-        mips|mipsel)       echo "mipsel" ;;
-        ppc64le|ppc64el)   echo "ppc64el" ;;
-        riscv64)           echo "riscv64" ;;
-        s390x)             echo "s390x" ;;
+        x86_64|amd64)
+            if kernel_supports_io_uring && has_aesni && has_tc; then
+                echo "openppp2-linux-amd64-tc-io-uring-simd.zip"
+            elif kernel_supports_io_uring && has_aesni; then
+                echo "openppp2-linux-amd64-tc-io-uring-simd.zip"
+            elif kernel_supports_io_uring && has_tc; then
+                echo "openppp2-linux-amd64-tc-io-uring.zip"
+            elif has_aesni && has_tc; then
+                echo "openppp2-linux-amd64-tc-simd.zip"
+            elif has_tc; then
+                echo "openppp2-linux-amd64-tc.zip"
+            else
+                echo "openppp2-linux-amd64.zip"
+            fi
+            ;;
+        aarch64|arm64)
+            if kernel_supports_io_uring && has_tc; then
+                echo "openppp2-linux-aarch64-tc-io-uring.zip"
+            else
+                echo "openppp2-linux-aarch64.zip"
+            fi
+            ;;
+        armv7l|armv7)
+            if kernel_supports_io_uring; then
+                echo "openppp2-linux-armv7l-io-uring.zip"
+            else
+                echo "openppp2-linux-armv7l.zip"
+            fi
+            ;;
+        mips|mipsel)   echo "openppp2-linux-mipsel.zip" ;;
+        ppc64le|ppc64el) echo "openppp2-linux-ppc64el.zip" ;;
+        riscv64)       echo "openppp2-linux-riscv64.zip" ;;
+        s390x)         echo "openppp2-linux-s390x.zip" ;;
         *)
             print "❌ 不支持的架构: $arch" $RED
             exit 1
@@ -82,16 +121,16 @@ prompt_replace_file() {
 # ==================== 主菜单 ====================
 while true; do
     clear
-    print "=============== openppp2 一键脚本（v3.4 完整版）===============" $BLUE
-    echo "1) 服务端 - 完整自动安装（推荐，自动创建ppp命令）"
+    print "=============== openppp2 一键脚本（v3.6 智能版）===============" $BLUE
+    echo "1) 服务端 - 完整自动安装（推荐，自动最优版本）"
     echo "2) 服务端 - 配置系统服务（自行修改配置后使用）"
-    echo "3) 通用 - 更新二进制文件"
+    echo "3) 通用 - 更新二进制文件（自动最优版本）"
     echo "4) 通用 - 重启服务"
     echo "5) 通用 - 停止服务"
     echo "6) 通用 - 查看运行状态（日志前50行）"
     echo "7) 通用 - 完全卸载"
-    echo "8) 设置 ppp 快捷命令（输入 ppp 快速启动脚本）"
-    echo "9) 更新本脚本（获取最新版本）"
+    echo "8) 设置 ppp 快捷命令"
+    echo "9) 更新本脚本"
     echo "10) 退出"
     read -p "请输入选项 [1-10]: " OPERATION
 
@@ -104,28 +143,22 @@ while true; do
                 print "✅ 使用直连 GitHub" $YELLOW
             else
                 GITHUB_PROXY="https://git.apad.pro/"
-                print "✅ 已启用国内加速代理 (默认)" $GREEN
+                print "✅ 已启用国内加速代理" $GREEN
             fi
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
-                ARCH=$(detect_architecture)
-                print "🔍 检测到系统架构: $ARCH" $BLUE
-            fi
+            ZIP_NAME=$(choose_best_zip)
+            print "🔍 自动选择最优版本：$ZIP_NAME" $BLUE
 
             mkdir -p /opt/ppp && cd /opt/ppp
 
-            if [ "$OPERATION" = "1" ] || [ "$OPERATION" = "3" ]; then
-                ZIP_NAME="openppp2-linux-${ARCH}.zip"
-                URL="${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/${ZIP_NAME}"
-                prompt_replace_file "/opt/ppp/${ZIP_NAME}" "$URL" "openppp2-${ARCH}.zip" || continue
+            URL="${GITHUB_PROXY}https://github.com/liulilittle/openppp2/releases/latest/download/${ZIP_NAME}"
+            prompt_replace_file "/opt/ppp/${ZIP_NAME}" "$URL" "$ZIP_NAME" || continue
 
-                unzip -o "$ZIP_NAME" ppp -d . && chmod +x ppp && rm -f "$ZIP_NAME"
-                print "✅ openppp2 ($ARCH) 二进制处理完成" $GREEN
-            fi
+            unzip -o "$ZIP_NAME" ppp -d . && chmod +x ppp && rm -f "$ZIP_NAME"
+            print "✅ openppp2 最优版本处理完成" $GREEN
 
             if [ "$OPERATION" = "1" ]; then
-                print "🔧 正在安装依赖（jq、uuid-runtime、unzip）..." $BLUE
-                
+                print "🔧 正在安装依赖..." $BLUE
                 if command -v apt-get >/dev/null; then
                     apt-get update && apt-get install -y jq uuid-runtime unzip
                 elif command -v dnf >/dev/null; then
@@ -133,10 +166,9 @@ while true; do
                 elif command -v yum >/dev/null; then
                     yum install -y jq util-linux unzip
                 else
-                    print "❌ 无法识别包管理器，请手动安装依赖" $RED
+                    print "❌ 无法识别包管理器，请手动安装 jq uuid-runtime unzip" $RED
                     continue
                 fi
-
                 print "✅ 依赖安装完成" $GREEN
 
                 prompt_replace_file "/opt/ppp/ppp.sh" "${GITHUB_PROXY}https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/config/ppp.sh" "ppp.sh" || continue
@@ -144,7 +176,7 @@ while true; do
 
                 read -p "是否自行修改 appsettings.json？(y/n，默认 n): " SELF
                 if [[ "$SELF" =~ ^[Yy]$ ]]; then
-                    print "请手动修改 /opt/ppp/appsettings.json 后，运行选项 2 配置服务" $YELLOW
+                    print "请手动修改 /opt/ppp/appsettings.json 后，运行选项 2" $YELLOW
                     create_ppp_shortcut
                     continue
                 fi
@@ -220,7 +252,7 @@ while true; do
             systemctl status ppp.service --no-pager -l
             ;;
         7)
-            print "🗑️  开始卸载..." $YELLOW
+            print "🗑️ 开始卸载..." $YELLOW
             systemctl stop ppp.service 2>/dev/null
             systemctl disable ppp.service 2>/dev/null
             rm -f /etc/systemd/system/ppp.service
@@ -235,31 +267,25 @@ while true; do
                 rm -f /opt/ppp/ppp /opt/ppp/ppp.sh /opt/ppp/openppp2-linux-*.zip 2>/dev/null
                 print "✅ 已保留配置文件" $GREEN
             fi
-
             rm -f /usr/local/bin/ppp
             print "✅ 卸载完成" $GREEN
             exit 0
             ;;
-
         8)
             create_ppp_shortcut
             ;;
-
         9)
             print "🌍 更新本脚本 - 请选择方式" $BLUE
             echo "1) 使用国内加速 (推荐)"
             echo "2) 直连 GitHub"
             read -p "请输入 [1-2]（默认 1）: " UPDATE_MODE
-
             if [ "$UPDATE_MODE" = "2" ]; then
                 UPDATE_URL="https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
             else
                 UPDATE_URL="https://git.apad.pro/https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh"
             fi
-
             print "📥 正在下载最新脚本..." $BLUE
             wget -4 -O /root/ppp_install.sh "$UPDATE_URL" && chmod +x /root/ppp_install.sh
-
             if [ $? -eq 0 ]; then
                 print "✅ 脚本更新成功！正在重新启动..." $GREEN
                 exec /root/ppp_install.sh
@@ -267,7 +293,6 @@ while true; do
                 print "❌ 更新失败" $RED
             fi
             ;;
-
         10)
             print "👋 退出脚本" $GREEN
             exit 0
