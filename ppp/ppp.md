@@ -1,11 +1,11 @@
-1自动(半自动):一键脚本，仅支持 x86
+# 服务端自动(半自动)安装:一键脚本，仅支持 x86
 <pre class="language-markup">wget -4 -O ppp_install.sh https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh && chmod +x ppp_install.sh && ./ppp_install.sh <code></code></pre>
 
 https://git.apad.pro/ 加速
 <pre class="language-markup">wget -4 -O ppp_install.sh https://git.apad.pro/https://raw.githubusercontent.com/zouazhi/zouazhi/main/ppp/ppp_install.sh && chmod +x ppp_install.sh && ./ppp_install.sh <code></code></pre>
 
 
-2手动
+# 手动
 拉取二进制文件
 <pre class="language-markup">mkdir /opt/ppp && cd /opt/ppp && wget https://github.com/liulilittle/openppp2/releases/latest/download/openppp2-linux-amd64.zip && unzip -o $(ls | grep -m1 'openppp2.*\.zip') ppp -d . && chmod +x ppp && echo "✅ ppp 安装/更新完成" && rm -f $(ls | grep -m1 'openppp2.*\.zip') <code></code></pre>
 
